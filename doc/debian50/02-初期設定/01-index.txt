@@ -51,13 +51,6 @@ SSHD: All .example.ne.jp
 上記の作業が完了したら次のコマンドを実行します。
 
 {{{
-apt-get update
-apt-get upgrade --show-upgraded
-}}}
-
-=== 結果 ===
-
-{{{
 # apt-get update
 # apt-get upgrade --show-upgraded
 }}}

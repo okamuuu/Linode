@@ -1,0 +1,14 @@
+= devconf =
+
+'''''当サイトではPostfixを使ったメールサーバー構築方法を紹介します。'''''
+
+== devconfの設定変更 ==
+
+postfixをインストールする場合''debconf''と呼ばれる画面が立ち上がりますが、
+当サイトでは対話形式である1.Dialogではなく、6.対話しないでの操作を説明します。
+
+debconf/frontendを変更して対話形式を無効化します。
+
+{{{
+% sudo dpkg-reconfigure debconf
+}}}

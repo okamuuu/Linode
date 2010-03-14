@@ -2,7 +2,7 @@
 
 '''''当サイトではPostfixを使ったメールサーバー構築方法を紹介します。'''''
 
-== 確認 ==
+== postfixのインストール状況を確認 ==
 
 postfixを検索
 
@@ -20,64 +20,44 @@ p   postfix
 % sudo aptitude install postfix
 }}}
 
-ASCIIアートのような表現によるダイアログが表示されるので「Ctrl+l」でいくらか画面が再描画されるのでお試しください。
+ちなみに削除する場合はこのようにします
 
-後で変更できるので設定しないを選択。
+{{{
+% sudo aptitude purge postfix
+}}}
 
-== ドキュメント確認 ==
+== 一時停止 ==
 
-以下のコマンドを実行し、ドキュメントを読んでおいて下さい。
+インストール直後の''postfix''はデフォルト設定のまま、起動しています。
+
+{{{
+% sudo /sbin/service postfix status
+postfix is running.
+}}}
+
+設定が完了するまで停止しておきましょう
+
+{{{
+% sudo /sbin/service postfix stop
+Stopping Postfix Mail Transport Agent: postfix.
+}}}
+
+== manコマンドでドキュメント確認 ==
+
+''man''を実行し、ドキュメントを読んでおいて下さい。
 
 {{{
 % man postfix
 }}}
 
+manコマンドの使い方は後で書く
 
-== 設定ファイルを確認 ==
+== 概要 ==
 
-設定ファイルを修正します。設定ファイルの場所が分からない場合は先ほどの''man command''を実行します。
 
-{{{
-% man postfix
-}}}
 
-設定ファイルを確認するためにはpostconf -dを実行すれば分かるようです。
 
-{{{
-CONFIGURATION PARAMETERS
-       The following main.cf configuration parameters are exported as environment variables with the same names:
-
-       command_directory (see 'postconf -d' output)
-              The location of all postfix administrative commands.
-
-       daemon_directory (see 'postconf -d' output)
-              The directory with Postfix support programs and daemon programs.
-
-       config_directory (see 'postconf -d' output)
-              The default location of the Postfix main.cf and master.cf configuration files.
-
-}}}
-
-postconf -d を実行します。結果が沢山出力されるので''grep''を併用します。
-
-{{{
-% sudo postconf -d | grep config_directory
-config_directory = /etc/postfix
-}}}
-
-もし、分からない事があっても、あきらめずにmanコマンドを実行してください。
-
-== 設定ファイルを作成 ==
-
-postfixの設定ファイルは/etc/postfix/main.cfですが、install時に「設定しない」を選んだ場合、雛型となるmain.cfが存在していません。
-
-雛型をコピーします。
-
-{{{
-% sudo cp /usr/share/postfix/main.cf.dist /etc/postfix/main.cf
-}}}
-
-エディタで開く
+== 設定ファイルを編集 ==
 
 {{{
 % sudo vi /etc/postfix/main.cf
@@ -86,8 +66,8 @@ postfixの設定ファイルは/etc/postfix/main.cfですが、install時に「�
 下記項目を修正
 
 {{{
-myhostname = mail.dev-01.fra	# FQDNの指定
-mydomain = dev-01.linode
+myhostname = mail.dev-01.ca	# FQDNの指定
+mydomain = dev-01.ca
 myorigin = $mydomain		
 inet_inerfaces = all
 mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain	# 自ドメイン宛メールを受信可能にする。

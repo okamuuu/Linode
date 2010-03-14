@@ -14,4 +14,4 @@ nytprof/*
 *.log
 conf/linode_local.yml
 backup/*
-
+core.*
