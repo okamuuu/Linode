@@ -1,4 +1,4 @@
-= Postifx =
+= Postfix =
 
 '''''当サイトではPostfixを使ったメールサーバー構築方法を紹介します。'''''
 
@@ -52,163 +52,117 @@ Stopping Postfix Mail Transport Agent: postfix.
 
 manコマンドの使い方は後で書く
 
-== 概要 ==
-
-
-
-
 == 設定ファイルを編集 ==
 
 {{{
 % sudo vi /etc/postfix/main.cf
 }}}
 
-下記項目を修正
+下記項目を追記します。既存のものはコメントアウトするなり削除するなりして構いません。
+この設定ファイルを誤って消去してしまい、デフォルトの状態をどうしても確認したい場合は
+/usr/share/postfix/main.cf.distなどを参考にすると良いです。
 
 {{{
-myhostname = mail.dev-01.ca	# FQDNの指定
+### FQDNの指定
+### ドメイン名
+### 自ドメイン宛メールを受信可能にする。
+myhostname = mail.dev-01.ca
 mydomain = dev-01.ca
-myorigin = $mydomain		
-inet_inerfaces = all
-mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain	# 自ドメイン宛メールを受信可能にする。
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
 
+### メール送信時に補完するドメイン名
+### Postfixが信頼するネットワークをsubnetにする
+myorigin = $mydomain
+mynetworks_style=subnet
 
-### 信頼しているクライアントIPアドレスを指定
-mynetworks = 127.0.0.0/8
-relay_domains = $mydestination
+### エイリアス
+alias_maps=hash:/etc/aliases
 
 ### メールボックス形式をMaildir形式にする
-home_mailbox = Maildir/
-
+### 拡張メールアドレスの区切り文字
 ### メールサーバーソフト名の隠蔽化
+### メールの到着通知機能を無効にする
+home_mailbox = Maildir/
+recipient_delimiter = +
 smtpd_banner = $myhostname ESMTP unknown 
+biff=no
 }}}
 
-以下の項目を追記
+ここまでの作業で設定ファイルへの記述に誤りがないか文法チェックを行います。
 
 {{{
-### SMTP-Auth 
-smtpd_sasl_auth_enable = yes	
-smtpd_sasl_local_domain = $myhostname	
-smtpd_recipient_restrictions =
-    permit_mynetworks		
-    permit_sasl_authenticated	
-    reject_unauth_destination
-
-### 受信メールサイズ制限
-message_size_limit = 10485760	
-
-### アカウントが実在するかの問い合わせをさせない
-disable_vrfy_command = yes
-
-### 送信者のメールアドレスがDNSのA、MXレコードを持たない場合は拒否
-smtpd_sender_restrictions = reject_unknown_sender_domain
+% sudo postfix check
 }}}
 
-XXX とりあえずここまで
+エラーが無ければ何も表示されません。
 
-== SMTP-Auth設定 ==
+== エイリアスの設定 ==
 
-=== インストール ===
+Linuxではpostmaster, wwwといったシステム・ユーザーと呼ばれる特殊なユーザーが存在しています。
+
+これらは/home/以下には存在しておらず、デフォルトではシステムユーザー宛てのメールアドレスは全てrootに転送されるように設定されています。
+
+が、本来rootユーザーとしてログインして管理する事はしないのでこれらのメールは読まれない事になってしまいます。
+
+そのためroot宛てのメールが管理者用の一般ユーザーへ転送されるようにエイリアス設定しておきます。
+以下ではhomepageユーザーにメールを転送するようにしています。
 
 {{{
-sudo aptitude install sasl2-bin
+% sudo vi /etc/aliases
 }}}
 
-START=NOをSTART=yesに変更します。
+次の行を追加。
 
 {{{
-% sudo vi /etc/default/saslauthd
+root: homepage
 }}}
 
-=== 起動 ===
-
-saslauthdを起動、chkconfigに追加
+/etc/aliasesファイルに基づいて/etc/aliases.dbファイルします。
 
 {{{
-% sudo /sbin/service start
-% sudo /sbin/chkconfig saslauthd on
-% sudo /sbin/chkconfig --list saslauthd
+% sudo /usr/sbin/postalias /etc/aliases
 }}}
 
-既存ユーザー homepageのメールボックスを作成
-
-{{{
-% mkdir ~/Maildir
-% chmod 700 ~/Maildir
-}}}
-
-今後ユーザーを追加した場合は自動的にMaildirディレクトリを用意する
-{{{
-% sudo mkdir -p /etc/skel/Maildir/{new,cur,tmp}
-% sudo chmod -R 700 /etc/skel/Maildir/
-}}}
-
-== Procmailインストール ==
-
-{{{
-% sudo aptitude install procmail
-}}}
-
-Postfix設定ファイルの編集
-
-{{{
-% sudo vi /etc/postfix/main.cf
-}}}
-
-{{{
-mailbox_command = /usr/bin/procmail	#  Procmailと連携するようにする。
-}}}
-
-Procmail設定ファイルを記述
-
-{{{
-% sudo vi /etc/procmailrc
-}}}
-
-{{{
-SHELL=/bin/bash
-PATH=/usr/bin:/bin
-DROPPRIVES=yes
-MAILDIR=$HOME/Maildir
-DEFAULT=$MAILDIR/
-LOGFILE=$MAILDIR/.procmail.log # ログ出力先
-# VERBOSE=ON
-# 未承諾広告メール削除※システムの文字コードがUTF-8を想定
-0
-* ^Subject:.*iso-2022-jp
-* ^Subject:\/.*
-* ? echo "$MATCH" | nkf -mwZ2 | sed 's/[[:space:]]//g' | egrep '未承諾広告※'
-/dev/null
-}}}
-
-上記で出力するログをログローテーションに追加
-
-{{{
-% sudo vi /etc/logrotate.d/procmail
-}}}
-
-{{{
-/home/*/Maildir/.procmail.log {
-    missingok
-    nocreate
-    notifempty
-}
-
-}}}
-
-== Postfix起動 ==
-
-設定ファイルの内容をチェック
+== Postfixを再起動 ==
 
 {{{
 % sudo /sbin/service postfix restart
-% sudo /sbin/chkconfig postfix on
 }}}
 
-== ポート確認 ==
+プロセス確認
 
 {{{
-% sudo nmap localhost | grep smtp
-25/tcp  open  smtp
+% pgrep -lf master
+18643 /usr/lib/postfix/master
+}}}
+
+masterというプロセスが発見できればPostfixが動作中だと判断できます。
+
+== 不正中継のテスト ==
+
+telnetがまだ入って無い場合はインストール
+
+{{{
+% sudo aptitude install telnet
+}}}
+
+中継テストを中継してくれているサーバーへ次のようにアクセス
+
+{{{
+% telnet relay-test.mail-abuse.org
+}}}
+
+気休め程度のテストですが、行っておくとよいでしょう。
+万が一問題が起きた場合はpostfixを緊急停止します。
+
+{{{
+% sudo /sbin/postfix abort
+}}}
+
+stopでは現在処理中のものは処理を続けてしまいますのでabortします。
+
+チェックが終わったらもう一度停止しておきましょう。
+
+{{{
+% sudo /sbin/postfix stop
 }}}
