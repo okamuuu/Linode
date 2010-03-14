@@ -1,0 +1,58 @@
+= screen導入 =
+
+'''''仮想端末ソフトであるscreenは[[BR]]1つの端末の中に複数のウィンドウを立ち上げて作業することができます。'''''
+
+== 確認 ==
+
+screenが導入されているかどうかを確認します。
+
+{{{
+$ yum list | grep screen
+
+gnome-screensaver.i386                   2.16.1-8.el5                  base
+screen.i386                              4.0.3-1.el5                   base
+xfce4-screenshooter-plugin.i386          1.0.0-4.el5.centos            extras
+xscreensaver.i386                        1:5.04-1.el5.centos           extras
+xscreensaver-base.i386                   1:5.04-1.el5.centos           extras
+xscreensaver-extras.i386                 1:5.04-1.el5.centos           extras
+xscreensaver-extras-gss.i386             1:5.04-1.el5.centos           extras
+xscreensaver-gl-base.i386                1:5.04-1.el5.centos           extras
+xscreensaver-gl-extras.i386              1:5.04-1.el5.centos           extras
+xscreensaver-gl-extras-gss.i386          1:5.04-1.el5.centos           extras
+
+}}}
+
+上記の場合まだインストールされていません。baseレポジトリから
+次のコマンドで''screen''をインストールします。
+
+{{{
+$ sudo yum -y install screen
+}}}
+
+== 設定ファイルを編集 ==
+
+次のように編集します。
+
+ * screenのエスケープキャラクタをCtrl+tにする
+ * ビジュアルベルをオフにする
+ * 画面の最下部にウィンドウ番号などを表示する。
+ * 自動デタッチ機能を有効にする。
+ * 文字コードにUTF8を使う。
+ * エスケープキャラクタ＋kでウィンドウを閉じるようにする
+
+=== ~/.screenrcを編集 ===
+
+{{{
+$ vi ~/.screenrc
+}}}
+
+=== 記述内容 ===
+
+{{{
+escape ^Tt
+vbell off
+hardstatus alwayslastline " %'%-w%{=b bw}%n %t%{-}%+w"
+autodetach on
+defutf8 on
+bind ^k kill
+}}}

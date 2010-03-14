@@ -1,0 +1,114 @@
+= 接続元ネットワークを制限する =
+
+'''''boot直後はサーバーは無防備の状態であり、不特定多数のネットワークから[[BR]]ログインを試みる事ができます。[[BR]]まずはアクセスを許可するネットワークを制限します。'''''
+
+== 作業概要 ==
+
+ * 自身が利用しているネットワークを確認する。
+ * 自身が利用しているネットワーク以外からの''SSH''を禁止する。
+
+== 自身が利用しているネットワークを確認する ==
+
+現時点ではSSHポートに対して誰でもアクセスできる状態です。
+自分が使用しているISP以外からはアクセスできないように規制します。
+
+過去のログインユーザー一覧情報を表示して
+自身が利用しているISPを確認します。
+
+{{{
+# last -a
+root     pts/0        Sun Feb 14 04:07   still logged in    xx123-45-658-151.xxx.example.ne.jp
+}}}
+
+ここでは xx123-45-658-151.xxx.example.ne.jpと表示されていたと仮定します。
+
+== 自身が利用しているネットワーク以外からのSSHを禁止する ==
+
+{{{
+# vim /etc/hosts.deny
+}}}
+
+次の行を追記します。
+
+{{{
+All: All
+}}}
+
+/etc/hosts.allowを編集します
+
+{{{
+# vim /etc/hosts.allow
+}}}
+
+{{{
+SSHD: All .example.ne.jp
+}}}
+
+ひとまずあなたが契約しているISP経由でないと''SSH接続''ができないようになりました。
+
+== セキュリティのアップデート ==
+
+上記の作業が完了したら次のコマンドを実行します。
+
+{{{
+apt-get update
+apt-get upgrade --show-upgraded
+}}}
+
+=== 結果 ===
+
+{{{
+# apt-get update
+# apt-get upgrade --show-upgraded
+}}}
+
+== HOSTNAMEの設定 ==
+
+HOSTNAMEは通常自分の好きな名前をつけるものなので各自で自由に設定してみてください。
+ここでは''DEV-01''と名付けました。
+
+{{{
+# echo "DEV-01" > /etc/HOSTNAME
+# hostname -F /etc/HOSTNAME
+}}}
+
+DEV-01というhostnameはローカルルールなのでどのIPアドレスの事を指しているかを
+/etc/hostsで指定しておく。
+
+{{{
+# vim /etc/hosts
+}}}
+
+{{{
+74.207.2XX.XXX DEV-01
+}}}
+
+== 一般ユーザー作成 ==
+
+一般ユーザーを作成します。ここでは例としてhomepageと
+名付けていますが各自で好きな名前を使用して下さい。
+
+{{{
+# addgroup --gid 1000 agent
+# useradd homepage -g agent --uid 1001 -m 
+# passwd homepage
+Changing password for user homepage.
+New UNIX password:
+Retype new UNIX password:
+passwd: all authentication tokens updated successfully.
+}}}
+
+== localeの設定 ==
+
+{{{
+% sudo su
+# cat <<END_LOCALE > /etc/locale.gen
+en_US ISO-8859-1
+en_US.UTF-8 UTF-8
+ja_JP.UTF-8 UTF-8
+ja_JP.EUC-JP EUC-JP
+END_LOCALE
+# locale-gen
+# exit
+}}}
+

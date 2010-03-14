@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf8" />
+    <title>dovecot | How to Linode</title>
+    <meta name="keywords" content="UZQ5TPjx, dovecot" />
+    <meta name="description" content="受信メールサーバーにDovecotを使用します。" />
+    <meta name="robots" content="all" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../common/css/import.css"/>
+</head>
+<body>
+	<div id="wrapper">
+		<div id="wrap">
+			<div id="header">
+				<p id="title"><a href="/">How to Linode</a></p>
+			</div>
+<!-- category[start] -->
+<ul id="tab">
+<li><a href="/" class="home">HOME</a></li>
+<li><a href="/centos53/" class="centos53 current">CentOS5.3</a></li>
+<li><a href="/debian50/" class="debian50">Debian5.0</a></li>
+</ul>
+<!-- category[end] -->
+
+<!-- bread[start] -->
+<p id="bread">
+<a href="/">home</a> &gt;
+dovecot
+</p>
+<!-- bread[end] -->
+
+			<div id="side-bar">
+<!-- menu[start] -->
+<h3>初期設定</h3>
+<ul class="menu">
+    <li><a href="index.html">OS起動</a></li>
+    <li><a href="02-ssh.html">OpenSSH設定</a></li>
+    <li><a href="02-yum.html">yum最適化</a></li>
+    <li><a href="02-sudo.html">sudo導入</a></li>
+    <li><a href="02-vim.html">vi拡張</a></li>
+    <li><a href="02-screen.html">screen導入</a></li>
+    <li><a href="02-zsh.html">zsh導入</a></li>
+    <li><a href="02-ntpd.html">日付設定</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>Webサーバー構築</h3>
+<ul class="menu">
+    <li><a href="03-virtualhost.html">バーチャルホスト設定</a></li>
+    <li><a href="03-htdigest.html">認証ページ作成</a></li>
+    <li><a href="03-ssl.html">SSL通信</a></li>
+    <li><a href="03-fcgi.html">FCGI</a></li>
+    <li><a href="03-memcache.html">mamcache</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>メールサーバー構築</h3>
+<ul class="menu">
+    <li><a href="04-postfix.html">Postifx</a></li>
+    <li><a href="04-dovecot.html">dovecot</a></li>
+    <li><a href="04-mailx.html">mailコマンド導入</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>セキュリティ強化</h3>
+<ul class="menu">
+    <li><a href="05-tripwire.html">Tripwire</a></li>
+    <li><a href="05-chkrootkit.html">chkrootkit</a></li>
+    <li><a href="05-snort.html">Snort + Oinkmaster</a></li>
+    <li><a href="05-swatch.html">SWATCH</a></li>
+    <li><a href="05-clam.html">Clam AntiVirus</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>DBサーバー構築</h3>
+<ul class="menu">
+    <li><a href="06-mysql.html">MySQL導入</a></li>
+    <li><a href="06-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>開発者向けツール導入</h3>
+<ul class="menu">
+    <li><a href="07-subversion.html">subversion</a></li>
+    <li><a href="07-trac.html">Trac</a></li>
+    <li><a href="07-hotcopy_svn_trac.html">Trac & SVN バックアップ</a></li>
+    <li><a href="07-git.html">git</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>バックアップ強化</h3>
+<ul class="menu">
+    <li><a href="08-backup.html">自動バックアップ</a></li>
+    <li><a href="08-subversion.html">MySQL導入</a></li>
+    <li><a href="08-cwRsync.html">rsyncクライアント導入</a></li>
+    <li><a href="08-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+			</div>
+		    <div id="content">
+		        <h1 id="dovecot">dovecot</h1>
+<p id="description">受信メールサーバーにDovecotを使用します。</p>
+<h2 id="インストール">インストール</h2>
+<pre class="wiki">
+% sudo yum -y install dovecot
+</pre>
+<h2 id="設定">設定</h2>
+<p>
+設定ファイルを編集します。
+</p>
+<pre class="wiki">
+% sudo vi /etc/dovecot.conf
+</pre>
+<p>
+変更箇所は以下のとおり
+</p>
+<pre class="wiki">
+protocols = imap imaps pop3 pop3s	# POP追加
+mail_location = maildir:~/Maildir	# メールボックス形式をMaildirに
+</pre>
+<h2 id="起動">起動</h2>
+<pre class="wiki">
+% sudo /etc/rc.d/init.d/dovecot start
+% sudo /sbin/chkconfig dovecot on
+% sudo /sbin/chkconfig --list dovecot
+</pre>
+<h2 id="アカウント作成">アカウント作成</h2>
+<p>
+新規メールユーザー adminを作成します。ただしSSHによるリモート接続は許可しません。
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/useradd -s /sbin/nologin admin
+% sudo mkdir 
+% sudo passwd admin
+</pre>
+<p>
+パスワードが<em>UZQ5TPjx</em>だったとすると
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/saslpasswd2 -u mail.linode.jp -c admin
+Password: [UZQ5TPjx]
+Again (for verification): [UZQ5TPjx]
+</pre>
+<p>
+ユーザーを確認し、sasldb2所有グループをpostfixへ変更します。
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/sasldblistusers2
+admin@mail.linode.jp: userPassword
+% sudo chgrp postfix /etc/sasldb2
+</pre>
+<p>
+メールユーザーが不要になった場合は次のコマンドで削除できます。
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/saslpasswd2 -d admin -u mail.linode.jp
+</pre>
+<h2 id="起動">起動</h2>
+<p>
+<em>dovecot</em>を起動します。
+</p>
+<pre class="wiki">
+% sudo /sbin/service dovecot restart
+% sudo /sbin/chkconfig dovecot on
+% sudo /sbin/chkconfig --list dovecot
+dovecot         0:off   1:off   2:on    3:on    4:on    5:on    6:off
+
+</pre>
+<h2 id="メール送信テスト">メール送信テスト</h2>
+<h3 id="localhost内で送信テスト">localhost内で送信テスト</h3>
+<pre class="wiki">
+% /usr/sbin/sendmail admin
+Subject: test
+test
+.
+</pre>
+<p>
+確認。管理者権限に切り替えてadminユーザーの下記ディレクトリを確認します。
+</p>
+<pre class="wiki">
+% sudo su
+# cd /home/admin/Maildir/new/
+# ls 
+# exit
+%
+</pre>
+<h2 id="メールソフト設定">メールソフト設定</h2>
+<p>
+thunderbirdで設定した場合は次のような項目を設定して下さい。
+</p>
+<table>
+<tr><td> あなたの名前 </td><td> linode.jp </td></tr>
+<tr><td> メールアドレス </td><td> admin@mail.linode.jp </td></tr>
+<tr><td> メール受信サーバーの種類 </td><td> POP </td></tr>
+<tr><td> メール受信サーバー </td><td> mail.linode.jp </td></tr>
+<tr><td> 共通受信トレイ </td><td> 使用しない </td></tr>
+<tr><td> 受信サーバのユーザ名 </td><td> admin </td></tr>
+<tr><td> アカウント名 </td><td> admin@mail.linode.jp </td></tr>
+</table>
+<h2 id="管理者宛へのメールを一般ユーザーへ">管理者宛へのメールを一般ユーザーへ</h2>
+<p>
+aliasファイルを変更し、root宛のメールをhomepageユーザーへ転送します。
+</p>
+<pre class="wiki">
+% sudo vi /etc/aliases
+</pre>
+<p>
+以下を最終行に追記します。
+</p>
+<pre class="wiki">
+root:	admin
+</pre>
+<p>
+変更を反映
+</p>
+<pre class="wiki">
+sudo newaliases
+</pre>
+
+		    </div>
+			<br class="clear" />
+			<div id="footer">
+				<p>
+					<a href="http://linode.jp">Linode</a> | 
+					<a href="http://www.add9.biz/phpunit">PHPUnit</a> | 
+					<a href="http://www.add9.biz/symfony">Symfony</a>
+					<br />
+				
+					<a href="http://www.add9.biz/c">C</a> | 
+					<a href="http://www.add9.biz/moose">Moose</a> | 
+					<a href="http://www.add9.biz/design_pattern">Design Pattern</a>
+					<br />
+
+					<a href="http://www.add9.biz/jump">Jump Attack Forum</a> | 
+					<a href="http://dancepod.tv">DancePod.tv</a>
+				</p>
+			</div>
+	    </div>
+		<div id="adsence">
+			<script type="text/javascript"><!--
+			google_ad_client = "pub-3627018862025650";
+			google_ad_slot = "0294735282";
+			google_ad_width = 160;
+			google_ad_height = 600;
+			//-->
+			</script>
+			<script type="text/javascript"
+			src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+			</script>
+		</div>
+	</div>
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-7965172-1");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+= 通信内容暗号化 =
+
+
+'''''メールの送受信を行う際に、ユーザー名、パスワードが盗聴されないように両者の間での通信内容を暗号化します。'''''
+
+== パッケージの確認 ==
+
+{{{
+% sudo rpm -qa grep cyrus-sasl*
+
+cyrus-sasl-lib-2.1.22-4
+cyrus-sasl-2.1.22-4
+cyrus-sasl-plain-2.1.22-4
+cyrus-sasl-md5-2.1.22-4
+}}}
+
+おそらく「zsh: no matches found: cyrus-sasl*」などと表示されるので、このようにパッケージが不足している場合はyum installを行ってください。
+
+{{{
+% sudo yum -y install 'cyrus-sasl*'
+}}}
+
+== サーバー証明書作成 ==
+ 
+ディレクトリ移動
+
+{{{
+% cd /etc/pki/tls/certs/
+}}}
+
+サーバー証明書作成
+
+{{{
+% sudo make mail.pem
+}}}
+
+次の質問に回答
+
+{{{
+Country Name ( 2 letter code ) [GB]:			JP
+State or Province Name ( full name ) [Berkshire]:		Tokyo
+Locality Name ( eg, city ) [Newbury]:			Shibuya
+Organization Name ( eg, company ) [My Company Ltd]	空エンター
+Organizational Unit Name ( eg, section ) []		空エンター
+Common Name ( eg, your name or your server's hostname ) []:	mail.linode.jp
+Email Address []:					admin@mail.linode.jp
+}}}
+
+== Postfix設定 ==
+
+=== main設定ファイル編集 ===
+
+該当するファイルを開く
+
+{{{
+% sudo vi /etc/postfix/main.cf
+}}}
+
+以下を最終行に追加(TLS通信の有効化)
+
+{{{
+smtpd_use_tls = yes
+smtpd_tls_cert_file = /etc/pki/tls/certs/mail.pem
+smtpd_tls_key_file = /etc/pki/tls/certs/mail.pem
+smptd_tls_session_cache_database = btree:/etc/postfix/smtpd_scache
+}}}
+
+== master設定ファイル編集 ==
+
+該当するファイルを開く
+
+{{{
+% sudo vi /etc/postfix/master.cf
+}}}
+
+以下の項目を有効にする(コメントオフを解除)
+
+{{{
+smtps      inet  n       -       n       -       -       smtpd
+  -o smtpd_tls_wrappermode=yes
+  -o smtpd_sasl_auth_enable=yes
+}}}
+
+postfix 再起動
+
+{{{
+% sudo /sbin/service postfix restart
+}}}
+
+telnetなどで通信可能な状態であることを確認
+
+== Dovecot設定 ==
+
+=== 設定ファイル編集 ===
+
+該当するファイルを開きます。
+
+{{{
+% sudo vi /etc/dovecot.conf
+}}}
+
+以下の項目を編集し、TLS通信を有効にします。
+
+{{{
+ssl_disable = no
+}}}
+
+以下の項目を編集し、サーバー証明書の所在を指定します。
+
+{{{
+ssl_cert_file = /etc/pki/tls/certs/mail.pem
+ssl_key_file = /etc/pki/tls/certs/mail.pem
+}}}
+
+== Dovecot再起動 ==
+
+{{{
+% sudo /sbin/service dovecot restart
+}}}
+
+== サーバー証明書のインポート ==
+
+上記の設定でサーバーとクライアント間の通信は暗号化されていますが、警告ウィンドウが表示されると思います。
+この表示を回避するために、インポート用サーバー証明書を作成します。
+
+=== サーバー証明書を作成 ===
+
+ディレクトリ移動
+% sudo cd /etc/pki/tls/certs
+% sudo openssl x509 -in mail.pem -outform DER -out mail.der
+
+作成されたmail.derをクライアント側のメールソフトへインポートします。windows上でダブルクリックすればよいでしょう。
+
+postfixで使用するプロトコルも制限しておきます。
+
+{{{
+% sudo vi /etc/postfix/master.cf
+}}}
+
+{{{
+# smtp      inet  n       -       n       -       -       smtpd	←	コメントアウト
+}}}
+
+再起動
+
+{{{
+% /sbin/service postfix restart
+}}}
+
+同じくdovecotで使用するプロトコルも制限しておきます。
+
+{{{
+% sudo vi /etc/dovecot.conf
+}}}
+
+{{{
+protocols = imaps
+}}}
+
+再起動
+
+{{{
+% sudo /sbin/service dovecot restart
+}}}
+
+== メールソフト設定 ==
+
+Thunderbirdの場合
+
+|| あなたの名前 || linode.jp ||
+|| メールアドレス || admin@mail.linode.jp ||
+|| メール受信サーバーの種類 || IMAP ||
+|| メール受信サーバー || mail.linode.jp ||
+|| 共通受信トレイ || 使用しない ||
+|| 受信サーバのユーザ名 || admin ||
+|| アカウント名 || admin@mail.linode.jp ||
+
+設定後はSSLを使用するにチェックをつける
+

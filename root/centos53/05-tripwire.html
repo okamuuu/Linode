@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf8" />
+    <title>Tripwire | How to Linode</title>
+    <meta name="keywords" content="tripwire, レポジトリ, パスフレーズ, twadmin" />
+    <meta name="description" content="ファイルの改竄を検出するためにTripwireを導入します。導入時のファイル状態をデータベース化し、そのデータベースとファイルの現状を比較することにより、ファイルの追加・変更・削除をチェックします。" />
+    <meta name="robots" content="all" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../common/css/import.css"/>
+</head>
+<body>
+	<div id="wrapper">
+		<div id="wrap">
+			<div id="header">
+				<p id="title"><a href="/">How to Linode</a></p>
+			</div>
+<!-- category[start] -->
+<ul id="tab">
+<li><a href="/" class="home">HOME</a></li>
+<li><a href="/centos53/" class="centos53 current">CentOS5.3</a></li>
+<li><a href="/debian50/" class="debian50">Debian5.0</a></li>
+</ul>
+<!-- category[end] -->
+
+<!-- bread[start] -->
+<p id="bread">
+<a href="/">home</a> &gt;
+Tripwire
+</p>
+<!-- bread[end] -->
+
+			<div id="side-bar">
+<!-- menu[start] -->
+<h3>初期設定</h3>
+<ul class="menu">
+    <li><a href="index.html">OS起動</a></li>
+    <li><a href="02-ssh.html">OpenSSH設定</a></li>
+    <li><a href="02-yum.html">yum最適化</a></li>
+    <li><a href="02-sudo.html">sudo導入</a></li>
+    <li><a href="02-vim.html">vi拡張</a></li>
+    <li><a href="02-screen.html">screen導入</a></li>
+    <li><a href="02-zsh.html">zsh導入</a></li>
+    <li><a href="02-ntpd.html">日付設定</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>Webサーバー構築</h3>
+<ul class="menu">
+    <li><a href="03-virtualhost.html">バーチャルホスト設定</a></li>
+    <li><a href="03-htdigest.html">認証ページ作成</a></li>
+    <li><a href="03-ssl.html">SSL通信</a></li>
+    <li><a href="03-fcgi.html">FCGI</a></li>
+    <li><a href="03-memcache.html">mamcache</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>メールサーバー構築</h3>
+<ul class="menu">
+    <li><a href="04-postfix.html">Postifx</a></li>
+    <li><a href="04-dovecot.html">dovecot</a></li>
+    <li><a href="04-mailx.html">mailコマンド導入</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>セキュリティ強化</h3>
+<ul class="menu">
+    <li><a href="05-tripwire.html">Tripwire</a></li>
+    <li><a href="05-chkrootkit.html">chkrootkit</a></li>
+    <li><a href="05-snort.html">Snort + Oinkmaster</a></li>
+    <li><a href="05-swatch.html">SWATCH</a></li>
+    <li><a href="05-clam.html">Clam AntiVirus</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>DBサーバー構築</h3>
+<ul class="menu">
+    <li><a href="06-mysql.html">MySQL導入</a></li>
+    <li><a href="06-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>開発者向けツール導入</h3>
+<ul class="menu">
+    <li><a href="07-subversion.html">subversion</a></li>
+    <li><a href="07-trac.html">Trac</a></li>
+    <li><a href="07-hotcopy_svn_trac.html">Trac & SVN バックアップ</a></li>
+    <li><a href="07-git.html">git</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>バックアップ強化</h3>
+<ul class="menu">
+    <li><a href="08-backup.html">自動バックアップ</a></li>
+    <li><a href="08-subversion.html">MySQL導入</a></li>
+    <li><a href="08-cwRsync.html">rsyncクライアント導入</a></li>
+    <li><a href="08-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+			</div>
+		    <div id="content">
+		        <h1 id="Tripwire">Tripwire</h1>
+<p id="description">ファイルの改竄を検出するためにTripwireを導入します。導入時のファイル状態をデータベース化し、そのデータベースとファイルの現状を比較することにより、ファイルの追加・変更・削除をチェックします。</p>
+<h2 id="インストール">インストール</h2>
+<p>
+tripwireが標準レポジトリから入手できるかを確認します。
+</p>
+<pre class="wiki">
+% sudo yum list | grep tripwire
+
+</pre>
+<p>
+なにも表示されない場合は標準レポジトリからは<em>tripwire</em>が導入できない
+という事になりますので<em>tripwire</em>が導入できる<em>レポジトリ</em>を探します。
+</p>
+<p>
+公式レポジトリであるepelからtripwireが導入できるかを確認します。
+</p>
+<pre class="wiki">
+% sudo yum list --enablerepo=epel | grep tripwire
+tripwire.i386                            2.4.1.1-1.el5                 epel
+</pre>
+<p>
+epelを利用してインストール
+</p>
+<pre class="wiki">
+% sudo yum --enablerepo=epel -y install tripwire
+</pre>
+<h2 id="キーを準備">キーを準備</h2>
+<p>
+以下の<em>パスフレーズ</em>を想定して導入手順を説明します。なお、これはこの通りに入力するように促しているのではないので、各自で適宜置き換えて下さい。
+</p>
+<table>
+<tr><td> サイトパスフレーズ	</td><td>	tripwire-site	 </td></tr>
+<tr><td> ローカルパスフレーズ		</td><td>	tripwire-local	 </td></tr>
+</table>
+<p>
+パス・フレーズを暗号化したキー(暗号化された文字列)を用意します。
+tripwire-setup-keyfilesを実行します。
+</p>
+<p>
+パスフレーズは数字、文字を含む8文字以上で入力してください。
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/tripwire-setup-keyfiles
+
+----------------------------------------------
+The Tripwire site and local passphrases are used to sign a  variety  of
+files, such as the configuration, policy, and database files.
+
+Passphrases should be at least 8 characters in length and contain  both
+letters and numbers.
+
+See the Tripwire manual for more information.
+</pre>
+<p>
+キーファイルを生成します。
+</p>
+<table>
+<tr><td> サイトキー	</td><td>	ローカルキー	 </td></tr>
+<tr><td> 	/etc/tripwire/site.key	</td><td>/etc/tripwire/$(HOSTNAME)-local.key </td></tr>
+</table>
+<pre class="wiki">
+----------------------------------------------
+Creating key files...
+
+(When selecting a passphrase, keep in mind that good passphrases typically
+have upper and lower case letters, digits and punctuation marks, and are
+at least 8 characters in length.)
+
+Enter the site keyfile passphrase: [tripwire-site]
+Verify the site keyfile passphrase: [tripwire-site]
+Generating key (this may take several minutes)...Key generation complete.
+
+(When selecting a passphrase, keep in mind that good passphrases typically
+have upper and lower case letters, digits and punctuation marks, and are
+at least 8 characters in length.)
+
+Enter the local keyfile passphrase: [tripwire-local]
+Verify the local keyfile passphrase: [tripwire-local]
+Generating key (this may take several minutes)...Key generation complete.
+</pre>
+<p>
+Tripwire設定ファイルを生成します。
+</p>
+<table>
+<tr><td> バイナリ             </td><td> プレーンテキスト        </td></tr>
+<tr><td> /etc/tripwire/tw.cfg </td><td> /etc/tripwire/twcfg.txt </td></tr>
+</table>
+<pre class="wiki">
+----------------------------------------------
+Signing configuration file...
+Please enter your site passphrase: [tripwire-site]
+Wrote configuration file: /etc/tripwire/tw.cfg
+
+A clear-text version of the Tripwire configuration file:
+/etc/tripwire/twcfg.txt
+has been preserved for your inspection.  It  is  recommended  that  you
+move this file to a secure location and/or encrypt it in place (using a
+tool such as GPG, for example) after you have examined it.
+</pre>
+<p>
+ポリシーファイルを作成します。
+</p>
+<table>
+<tr><td> バイナリ             </td><td> プレーンテキスト        </td></tr>
+<tr><td> /etc/tripwire/tw.pol </td><td> /etc/tripwire/twpol.txt </td></tr>
+</table>
+<pre class="wiki">
+----------------------------------------------
+Signing policy file...
+Please enter your site passphrase: [tripwire-site]
+Wrote policy file: /etc/tripwire/tw.pol
+
+A clear-text version of the Tripwire policy file:
+/etc/tripwire/twpol.txt
+has been preserved for  your  inspection.  This  implements  a  minimal
+policy, intended only to test  essential  Tripwire  functionality.  You
+should edit the policy file to  describe  your  system,  and  then  use
+twadmin to generate a new signed copy of the Tripwire policy.
+
+Once you have a satisfactory Tripwire policy file, you should move  the
+clear-text version to a secure location  and/or  encrypt  it  in  place
+(using a tool such as GPG, for example).
+
+Now run &quot;tripwire --init&quot; to enter Database Initialization  Mode.  This
+reads the policy file, generates a database based on its contents,  and
+then cryptographically signs the resulting  database.  Options  can  be
+entered on the command line to specify which policy, configuration, and
+key files are used  to  create  the  database.  The  filename  for  the
+database can be specified as well. If no  options  are  specified,  the
+default values from the current configuration file are used.
+</pre>
+<h2 id="設定">設定</h2>
+<p>
+前節の作業で既にデフォルトの設定ファイルが存在していますが、これを変更します。
+変更するにはプレーンテキスト版を設定ファイルを編集したあと<em>twadmin</em>コマンドなどを
+使ってバイナリ版の設定ファイルを生成します。
+</p>
+<h3 id="Tripwire設定ファイル(プレーンテキスト版)">Tripwire設定ファイル(プレーンテキスト版)</h3>
+<p>
+対象ファイルを開きます
+</p>
+<pre class="wiki">
+% sudo vi /etc/tripwire/twcfg.txt
+</pre>
+<p>
+以下を修正します。
+</p>
+<pre class="wiki">
+LOOSEDIRECTORYCHECKING = yes			# ディレクトリ・ファイルの追加削除をレポート
+MAILNOVIOLATIONS = false				# ファイル変更検知時にメールする
+EMAILREPORTLEVEL = 4
+REPORTLEVEL = 4
+</pre>
+<h3 id="Tripwire設定ファイル(電子署名版)">Tripwire設定ファイル(電子署名版)</h3>
+<p>
+暗号化された設定ファイルを作成します。
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/twadmin --create-cfgfile -S /etc/tripwire/site.key /etc/tripwire/twcfg.txt 
+Please enter your site passphrase: [tripwire-site]
+Wrote configuration file: /etc/tripwire/tw.cfg
+
+</pre>
+<p>
+暗号化された設定ファイルが生成されます。
+</p>
+<pre class="wiki">
+/etc/tripwire/tw.cfg
+</pre>
+<p>
+この暗号化された設定ファイルからプレーンテキスト版のファイルを復元できるので、プレーンテキスト版を削除します。
+</p>
+<pre class="wiki">
+% sudo rm -f /etc/tripwire/twcfg.txt
+</pre>
+<p>
+なお、復元方法は次のとおりです。
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/twadmin -m f -c /etc/tripwire/tw.cfg &gt; /etc/tripwire/twcfg.txt
+</pre>
+<h2 id="ポリシーファイルを作成">ポリシーファイルを作成</h2>
+<p>
+デフォルトのポリシーファイルと実際のファイル構成に差異があるのでこれを修正します。手作業で行っても可能ですが、手間がかかるのでPerlスクリプトで処理します。
+</p>
+<p>
+なお、このスクリプトは下記サイトから流用しています。
+</p>
+<p>
+<a class="ext-link" href="http://centossrv.com/tripwire.shtml"><span class="icon"></span>CentOSで自宅サーバー構築</a>
+</p>
+<h3 id="修正スクリプト">修正スクリプト</h3>
+<p>
+対象ファイルを作成
+</p>
+<pre class="wiki">
+% sudo vi /etc/tripwire/twpolmake.pl
+</pre>
+<p>
+下記内容を記述
+</p>
+<pre class="wiki">
+#!/usr/bin/perl
+# Tripwire Policy File customize tool
+# ----------------------------------------------------------------
+# Copyright (C) 2003 Hiroaki Izumi
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# ----------------------------------------------------------------
+# Usage:
+#    perl twpolmake.pl {Pol file}
+# ----------------------------------------------------------------
+$POLFILE=$ARGV[0];
+
+open(POL,&quot;$POLFILE&quot;) or die &quot;open error: $POLFILE&quot; ;
+my($myhost,$thost) ;
+my($sharp,$tpath,$cond) ;
+my($INRULE) = 0 ;
+while (&lt;POL&gt;) {
+    chomp;
+    if (($thost) = /^HOSTNAME\s*=\s*(.*)\s*;/) {
+        $myhost = `hostname` ; chomp($myhost) ;
+        if ($thost ne $myhost) {
+            $_=&quot;HOSTNAME=\&quot;$myhost\&quot;;&quot; ;
+        }
+    }
+    elsif ( /^{/ ) {
+        $INRULE=1 ;
+    }
+    elsif ( /^}/ ) {
+        $INRULE=0 ;
+    }
+    elsif ($INRULE == 1 and ($sharp,$tpath,$cond) = /^(\s*\#?\s*)(\/\S+)\b(\s+-&gt;\s+.+)$/) {
+        $ret = ($sharp =~ s/\#//g) ;
+        if ($tpath eq '/sbin/e2fsadm' ) {
+            $cond =~ s/;\s+(tune2fs.*)$/; \#$1/ ;
+        }
+        if (! -s $tpath) {
+            $_ = &quot;$sharp#$tpath$cond&quot; if ($ret == 0) ;
+        }
+        else {
+            $_ = &quot;$sharp$tpath$cond&quot; ;
+        }
+    }
+    print &quot;$_\n&quot; ;
+}
+close(POL) ;
+</pre>
+<p>
+実行権を付与
+</p>
+<pre class="wiki">
+% sudo chmod 700 /etc/tripwire/twpolmake.pl
+</pre>
+<h3 id="ポリシーファイル最適化">ポリシーファイル最適化</h3>
+<p>
+暗号化されたポリシーファイルから、最適化されたポリシーファイルを作成します。
+</p>
+<pre class="wiki">
+% sudo su
+# perl /etc/tripwire/twpolmake.pl /etc/tripwire/twpol.txt &gt; /etc/tripwire/twpol.txt.new
+# exit
+</pre>
+<h3 id="最適化済みのポリシーファイル(暗号署名版)作成">最適化済みのポリシーファイル(暗号署名版)作成</h3>
+<pre class="wiki">
+% sudo /usr/sbin/twadmin -m P -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key /etc/tripwire/twpol.txt.new
+Please enter your site passphrase: [tripwire-site]
+Wrote policy file: /etc/tripwire/tw.pol
+</pre>
+<h3 id="最適化済みのポリシーファイル(プレーンテキスト版)を削除">最適化済みのポリシーファイル(プレーンテキスト版)を削除</h3>
+<pre class="wiki">
+% sudo rm -f '/etc/tripwire/twpol.txt.*'
+</pre>
+<h3 id="ポリシーファイルを復元する場合">ポリシーファイルを復元する場合</h3>
+<pre class="wiki">
+% sudo twadmin -m p -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key &gt; /etc/tripwire/twpol.txt
+</pre>
+<h2 id="データベース作成">データベース作成</h2>
+<pre class="wiki">
+% sudo /usr/sbin/tripwire -m i -s -c /etc/tripwire/tw.cfg
+</pre>
+<p>
+ローカルパスフレーズを入力します。結構時間がかかります。
+</p>
+<h2 id="Tripwire確認">Tripwire確認</h2>
+<p>
+実行してみる。エラーが表示されない事を確認。
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/tripwire -m c -s -c /etc/tripwire/tw.cfg
+</pre>
+<p>
+試しにテストファイルを作成する
+</p>
+<pre class="wiki">
+% sudo su
+# echo test &gt; /root/test.txt
+# exit
+</pre>
+<p>
+再度実行して、ファイルが追加された事を検知していることを確認します。
+</p>
+<pre class="wiki">
+% sudo /usr/sbin/tripwire -m c -s -c /etc/tripwire/tw.cfg
+</pre>
+<p>
+テストファイルを削除しておきます。
+</p>
+<pre class="wiki">
+% sudo rm -f /root/test.txt
+</pre>
+<h2 id="シェルスクリプト作成および自動化">シェルスクリプト作成および自動化</h2>
+<p>
+シェルスクリプトを作成します。
+</p>
+<pre class="wiki">
+% sudo vi /root/tripwire.sh
+</pre>
+<p>
+次の内容を記述します。
+</p>
+<pre class="wiki">
+#!/bin/bash
+PATH=/usr/sbin:/usr/bin:/bin:/usr/local/tripwire/sbin
+
+# パスフレーズ設定
+LOCALPASS=xxxxxxxx # ローカルパスフレーズ
+SITEPASS=xxxxxxxx  # サイトパスフレーズ
+cd /etc/tripwire
+
+# Tripwireチェック実行
+tripwire -m c -s -c tw.cfg|mail -s &quot;Tripwire(R) Integrity Check Report in `hostname`&quot; root
+
+# ポリシーファイル最新化
+twadmin -m p -c tw.cfg -p tw.pol -S site.key &gt; twpol.txt
+perl twpolmake.pl twpol.txt &gt; twpol.txt.new
+twadmin -m P -c tw.cfg -p tw.pol -S site.key -Q $SITEPASS twpol.txt.new &gt; /dev/null
+rm -f twpol.txt* *.bak
+
+# データベース最新化
+rm -f /usr/local/tripwire/lib/tripwire/*.twd*
+tripwire -m i -s -c tw.cfg -P $LOCALPASS
+</pre>
+<p>
+実行権限を与えます。
+</p>
+<pre class="wiki">
+% sudo chmod 700 /root/tripwire.sh
+</pre>
+<p>
+/etc/crontabにTripwire定期自動実行設定追加
+</p>
+<pre class="wiki">
+00 3 * * * root /root/tripwire.sh
+</pre>
+
+		    </div>
+			<br class="clear" />
+			<div id="footer">
+				<p>
+					<a href="http://linode.jp">Linode</a> | 
+					<a href="http://www.add9.biz/phpunit">PHPUnit</a> | 
+					<a href="http://www.add9.biz/symfony">Symfony</a>
+					<br />
+				
+					<a href="http://www.add9.biz/c">C</a> | 
+					<a href="http://www.add9.biz/moose">Moose</a> | 
+					<a href="http://www.add9.biz/design_pattern">Design Pattern</a>
+					<br />
+
+					<a href="http://www.add9.biz/jump">Jump Attack Forum</a> | 
+					<a href="http://dancepod.tv">DancePod.tv</a>
+				</p>
+			</div>
+	    </div>
+		<div id="adsence">
+			<script type="text/javascript"><!--
+			google_ad_client = "pub-3627018862025650";
+			google_ad_slot = "0294735282";
+			google_ad_width = 160;
+			google_ad_height = 600;
+			//-->
+			</script>
+			<script type="text/javascript"
+			src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+			</script>
+		</div>
+	</div>
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-7965172-1");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+</body>
+</html>

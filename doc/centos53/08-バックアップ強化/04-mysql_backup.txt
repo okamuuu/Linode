@@ -1,0 +1,145 @@
+= MySQLバックアップ =
+
+'''''バックアップ動作を確認します。'''''
+
+== テスト用database ==
+
+{{{
+mysql> use dbuser;
+mysql> create table test( num int, name varchar(50) );
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> insert into test values ( 1, 'test' );
+mysql> select * from test;
+mysql> exit
+}}}
+
+== mysqldumpでのバックアップ手順 ==
+
+以下の作業を行い、バックアップが取れる状態であることを確認します。
+
+ * mysqldumpで生成されたSQL文を使用してリストア
+ * データを修正します。
+ * この時点でMySQLに異常があったと仮定して、ここでMySQLを停止します。
+ * まだ取得できていないバイナリログがあれば取得。
+
+=== SQL文を取得 ===
+
+{{{
+% sudo mysqldump --user=root --password=irc-mysql-root  --single-transaction --master-data=2 --flush-logs --hex-blob ilcadj1 > /backup/mysql-dump.sql
+}}}
+
+DBを更新
+
+{{{
+mysql> update test set name='test2' where num = 1;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+}}}
+
+{{{
+% sudo /sbin/service mysqld stop
+}}}
+
+まだ取得できていないバイナリログがあれば取得します。今回はすべてコピーしておきます。
+
+{{{
+% sudo cp -fr /var/lib/mysql/blog/ /backup/
+}}}
+
+リストア時、ロールフォワード時に、バイナリログを生成させないために、初期化パラメータファイルmy.cnfのlog-binに関する行をコメントアウトしておきます。
+
+{{{
+#log-bin=/var/lib/mysql/blog/irc-web01
+}}}
+
+インスタンスをリモートからの接続を禁止した状態で起動します。
+
+{{{
+% sudo mysqld_safe --defaults-file=/etc/my.cnf --skip-networking --skip-grant-tables
+}}}
+
+元に戻すSQLを発行します。
+
+{{{
+mysql --user=root --database=dbuser < /backup/mysql-dump.sql
+}}}
+
+あとは障害が発生した日時より後のバイナリログを使用してロールフォワードリカバリを実行します。最初に、バイナリデータからSQL文を生成します。
+
+{{{
+% sudo mysqlbinlog --disable-log-bin /backup/blog/colinux.000007 > /backup/recover.sql
+}}}
+
+リカバリ以降に行われたSQL文を発行してリストア終了
+
+{{{
+mysql --user=root --database=ilcadj1 < /backup/recover.sql
+}}}
+
+セーフモード状態のインスタンスを停止
+
+{{{
+mysqladmin shutdown --user=root --password==your-password 
+}}}
+
+初期化パラメータを正常に戻す
+
+{{{
+% sudo vi /etc/my.cnf
+}}}
+
+{{{
+log-bin=/var/lib/mysql/blog/irc-web01
+}}}
+
+再起動
+
+{{{
+% sudo /sbin/service mysqld start
+}}}
+
+接続をして復元されていることを確認します。
+
+=== mysqlhotcopyでのバックアップ取得方法確認 ===
+
+{{{
+% sudo mysqlhotcopy -u root -p 'your-password' dbuser /mysql_backup/
+ls /backup/dbuser
+db.opt  test.frm
+}}}
+
+上記のファイルを/etc/my.cnfで設定されているDBファイルに差し替えればOK
+後はバイナリログをSQL文に変更して差分を実行します。
+
+
+== DBファイルのバックアップを自動実行 ==
+
+=== 実行スクリプトを準備 ===
+
+ファイル作成
+
+{{{
+% sudo vi /root/mysqcopy.sh
+}}}
+
+下記内容を記述します。
+
+{{{
+% sudo rm -fr /mysql_backup/*
+% sudo mysqlhotcopy -u root -p 'your-password' dbuser /mysql_backup/
+}}}
+
+実行権限付与
+
+{{{
+% sudo chmod +x /root/mysqlcopy.sh
+}}}
+
+=== 毎日サーバー側にバックアップファイルを作成 ===
+
+/etc/crontabに下記を追記します
+
+{{{
+0 3 * * * root /root/mysqlcopy.sh
+}}}

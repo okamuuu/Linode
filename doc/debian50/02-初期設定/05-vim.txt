@@ -1,0 +1,163 @@
+= vi拡張 =
+
+'''''viは自由に拡張する事ができます。[[BR]]ここでは一例を紹介します。'''''
+
+== エイリアスの設定 ==
+
+{{{
+$ alias vi="vim"
+}}}
+
+ただし、この状態ではsudo vi とした場合はroot権限でvimではなく、viを使用することになるので次の設定も行う。
+
+{{{
+$ alias sudo='sudo '
+}}}
+
+わかりづらいのですがsudoの後ろに半角スペースをつけています。
+
+== 確認 ==
+
+vimのバージョンを確認します。
+
+{{{
+$ sudo aptitude show vim
+}}}
+
+古いので新しくします。
+
+{{{
+$ sudo update
+$ sudo aptitude install vim
+}}}
+
+
+== 設定ファイル編集 ==
+
+ユーザーのvim設定ファイルを編集します。
+
+{{{
+$ vi ~/.vimrc
+}}}
+
+次のように、各自好きな設定を記述してください。
+
+{{{
+" autocmd
+autocmd!
+
+" set bufname to screen's title
+autocmd BufEnter * if bufname("") !~ "^\[A-Za-z0-9\]*://" | silent! exe '!echo -n "\ek%:t\e\\"' | endif
+
+syntax enable
+
+" encoding
+set fileencoding=utf-8
+set fileencodings=utf-8,iso-2022-jp,euc-jp,cp932
+set fileformats=unix,dos,mac
+set encoding=utf-8
+
+" statusline
+set statusline=%<%f\ %m%r%h%w%y%{'['.(&fenc!=''?&fenc:&enc).']['.&ff.']'}%=%4v\ %l/%L
+set laststatus=2
+
+" 編集中のファイル名を表示
+" 画面の左側に常時''行番''を表示する。
+" ルーラーを表示する。
+set title
+set number
+set ruler
+
+" タブの見掛けの表示幅を4文字分にする。
+" オートインデント時に使用するインデントの深さも4文字分にする。
+" 自身がタブを入力時した際に、タブの代わりに4文字の半角スペースに置き換える
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+
+" タブが挿入された文章を編集する場合、タブの代わりに半角スペースに置き換えるようにする。
+" 行頭の余白内でTabを打ち込むと'shiftwidth'の数だけインデントする。
+set expandtab
+set smarttab
+
+" 高度な自動インデントを行う
+set smartindent
+
+" インクリメンタルサーチ
+set incsearch
+
+" 対括弧の表示
+" モード表示
+set showmatch
+set showmode
+
+" キーバインドをEmacs スタイルにする。
+" Ctrl+Aで行頭へ移動
+" Ctrl＋Bで一文字戻る
+" Ctrl+Dでカーソルの下の文字を削除
+" Ctrl+Eで行末へ移動
+" Ctrl+Fで一文字進む
+
+:noremap <C-A>  <Home>
+:noremap <C-B>   <Left>
+:noremap <C-D>   <Del>
+:noremap <C-E>   <End>
+:noremap <C-F>   <Right>
+
+" コマンドエイリアス
+:noremap ,t    :!prove -vl %<CR>
+:noremap ,pt   :%!perltidy %<CR>
+:noremap ,ptv  :! perltidy<CR>
+:noremap ,gcc :!gcc -Wall -o %< %<CR>:!%<<CR>
+
+" 日時の入力補助
+:inoremap <expr> ,df strftime('%Y-%m-%dT%H:%M:%S')
+:inoremap <expr> ,dd strftime('%Y-%m-%d')
+:inoremap <expr> ,dt strftime('%H:%M:%S')
+
+" コロンを識別子の有効な一部として認識させる
+set iskeyword+=:
+
+
+" コメントを見やすい色へ変更
+hi Comment cterm=bold ctermbg=black
+
+" 全角スペースを視覚化
+highlight ZenkakuSpace cterm=underline ctermfg=lightblue guibg=white
+match ZenkakuSpace /　/
+}}}
+
+なお、コピーしたテキストをvim上へペーストする場合
+コマンドモードで次のように入力するとよいでしょう。
+
+{{{
+:set paste
+:set paste
+}}}
+
+== ヘルプの使い方 ==
+
+コマンドモードで次のコマンドを実行します。
+
+{{{
+:help
+}}}
+
+ウィンドウが2つに分かれてます。このウィンドウを次のコマンドで行き来します。
+
+{{{
+[Ctrl-w][Ctrl-w]
+}}}
+
+次のコマンドでカレントウィンドウを閉じます。
+
+{{{
+[Ctrl-w]c
+}}}
+
+== 参考となる設定ファイル ==
+
+[http://github.com/ gitHub]には多くの開発者が自身のプロジェクトを公開しています。
+
+これらの中でdotfilesと記述されているプロジェクトにはこれらの設定をする際に大変参考になります。
+

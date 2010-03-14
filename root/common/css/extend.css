@@ -1,0 +1,75 @@
+@charset "utf-8";
+
+/* 各コンテンツ毎 */
+body { 	padding: 0 0; }
+
+#wrapper {
+	margin-left: auto;
+	margin-right: auto;
+	width: 1090px;
+}
+
+#wrap { 
+	float: left;
+	width: 910px;
+	background: url(../images/bg_mid.gif) repeat-y; 
+}
+
+#adsence {
+	float: right;
+	width: 160px;
+	padding-top: 130px;
+}
+
+#header {
+	height: 130px;
+	background: url(../images/bg_header.gif) no-repeat; 
+}
+
+#header p#title {
+	margin: 0 0 0 80px;
+	padding: 70px 0 0 0;
+}
+
+#side-bar {
+	float: left;
+	width: 240px;
+}
+
+#side-bar h3 {
+	font-weight: normal;
+	color: #FFFFFF;
+	margin: 0 0 0 40px;
+	padding: 6px 12px;
+	background: #000000;
+
+}
+
+#side-bar ul {
+	margin: 0 0 40px 40px;
+}
+
+#side-bar ul li {
+	padding: 12px 0;
+	list-style-type: none;
+	background: url(../images/dot_line.gif) repeat-x left bottom; 
+}
+
+#side-bar ul li a {
+	padding: 0 0 0 20px;
+	background: url(../images/arrow_black_right.gif) #ffffff no-repeat 6px 50%;
+}
+
+
+#footer {
+	height: 130px;
+	padding: 20px;
+	background: url(../images/bg_footer.gif) no-repeat bottom; 
+}
+
+#footer p {
+	text-align: center;
+	margin: 0 20px;
+	padding: 30px 0 20px 0;
+	border-top: solid 1px #EEEEEE;
+}

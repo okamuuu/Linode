@@ -1,0 +1,99 @@
+= sudo導入 =
+
+'''''極力rootユーザーでの操作を控えるため、sudoを導入します。'''''
+
+== suの問題 ==
+
+サーバー管理者が次のコマンドを実行したとします。
+
+{{{
+$ su
+}}}
+
+この場合、少し不都合な事が生じます。
+
+=== rootのパスワードを入力している ===
+
+サーバー管理は常にリモートアクセスを行っているので、このコマンドを
+入力した場合はroot権限のパスワードが漏えいしてしまう危険性が高まります。
+
+※sshで暗号化していてもできるなら避けたいものです。
+
+=== suで実行したコマンドがhisitoryに残らない ===
+
+いつ、だれがroot権限でそのコマンドを実行したのかを特定したい。
+
+=== あるコマンドだけ利用できればいいのに全権限を付与されてしまう ===
+
+ロッカーの鍵を借りたいだけなのに社長室の鍵や金庫の鍵まで丸ごと貸し出して欲しくない。
+
+== sudo ==
+
+上記の問題を解決するため、sudoを導入します。
+
+=== インストール ===
+
+{{{
+# yum -y install sudo
+}}}
+
+=== 設定 ===
+
+''wheel''グループにsudo権限を与えます。次のようにコメントアウトをはずします。
+
+{{{
+# /usr/sbin/visudo
+}}}
+
+{{{ 
+%wheel  ALL=(ALL) ALL
+}}}
+
+wheelグループに一般ユーザーhomepageを加えます。
+
+{{{
+# /usr/sbin/usermod -G wheel homepage 
+}}}
+
+確認
+
+{{{
+# cat /etc/group | grep wheel
+wheel:x:10:root,homepage
+}}}
+
+※時間を節約するためパスワードの入力を省略できるようにする事もできます。
+
+{{{
+# /usr/sbin/visudo
+}}}
+
+{{{ 
+%wheel  ALL=(ALL) NOPASSWD: ALL
+}}}
+
+=== sudoでの操作を制限 ===
+
+次のコマンドを使用禁止とします。
+
+{{{
+$ sudo /sbin/halt
+$ sudo /sbin/shutdown
+$ sudo /sbin/poweroff
+$ sudo /sbin/reboot
+$ sudo /sbin/fastboot
+$ sudo /sbin/init
+}}}
+
+次のように設定します。
+
+{{{
+# /usr/sbin/visudo
+}}}
+
+{{{
+Cmnd_Alias SHUTDOWN =  /sbin/halt, /sbin/shutdown, /sbin/poweroff, /sbin/reboot, /sbin/fastboot, /sbin/init
+%wheel  ALL=(ALL) !SHUTDOWN
+}}}
+
+

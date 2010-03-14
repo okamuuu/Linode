@@ -1,0 +1,51 @@
+@charset "utf-8";
+
+/* ===[tab]=================================================== */
+
+ul#tab {
+	margin: 20px 40px 20px 40px;
+	padding: 0;
+	list-style: none;
+	border-bottom: #000000 2px solid;
+}
+
+ul#tab li {
+	float: left;
+	margin: 0;
+	padding: 0;
+	font-family: Georgia, serif;
+	font-size: 80%;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+}
+
+ul#tab li a{
+	float: left;
+	font-size: 95%;
+	margin: 0;
+	padding: 10px 12px 10px 12px;
+	text-decoration: none;
+	color: #979183;
+	border: none;
+}
+
+ul#tab li a:hover {
+	color: #666666;
+	background: #EEEEEE;
+}
+
+ul#tab li a.current
+{
+	font-weight: bold;
+	color: #ffffff;
+	background: #000000;
+}
+
+ul#tab:after,
+ul#tab li:after{
+	content: "."; 
+    display: block; 
+    height: 0; 
+    clear: both; 
+    visibility: hidden;
+}

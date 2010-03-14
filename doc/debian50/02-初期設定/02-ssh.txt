@@ -1,0 +1,153 @@
+= SSHのログオンユーザーを制限 =
+
+'''''ネットワーク制限とあわせて、ユーザー制限を行いセキュリティを強化します。'''''
+
+== 作業概要 ==
+
+ * OpenSSHの最新番をインストール
+ * ルートユーザーでのSSHを禁止
+ * 認証方法をパスワード方式から鍵認証へ変更
+
+== インストール ==
+
+''OpenSSH''をインストールします。
+
+{{{
+$ sudo update
+$ sudo aptitude install -y openssh-server
+}}}
+
+== rootユーザーでのリモートログインを禁止する ==
+
+作業対象となるファイルを開きます。
+
+{{{
+# vim /etc/ssh/sshd_config
+}}}
+
+以下の項目を次の様に設定します。
+
+{{{
+PermitRootLogin no
+PermitEmptyPasswords no
+}}}
+
+ssh再起動
+
+{{{
+# /etc/init.d/ssh restart
+}}}
+
+homepageユーザーを使ってログインし直します。
+
+== 認証方法をパスワード方式から鍵認証へ変更 ==
+
+ * 秘密鍵を作成
+ * 秘密鍵を移動
+ * 鍵認証でのログイン認証に切り替える。
+
+※この作業は一般ユーザーでログインし直した状態を想定して説明します。
+
+鍵作成 
+
+{{{
+$ mkdir ~/.ssh
+$ cd ~/.ssh
+$ ssh-keygen -t dsa
+...
+}}}
+
+ssh-keygenを実行した後は次のように回答します。
+パスフレーズを空にしているのは後日自動実行スクリプトでの作業を
+想定している為です。
+
+{{{
+Generating public/private dsa key pair.
+Enter file in which to save the key (/home/homepage/.ssh/id_dsa): ←[空エンター]
+Enter passphrase (empty for no passphrase): ←[空エンター]
+Enter same passphrase again: ←[空エンター]
+Your identification has been saved in /home/homepage/.ssh/id_dsa.
+Your public key has been saved in /home/homepage/.ssh/id_dsa.pub.
+The key fingerprint is:
+00:f6:ba:11:39:7b:76:1f:40:85:9f:73:0c:ea:e7:be homepage@SCYLLA-01
+The key's randomart image is:
+}}}
+
+※パスワードを設定していたほうが安全かもしれませんが、そもそも鍵が流出した時点で
+すでにそのパスワードは時間稼ぎ程度の気休めにしか過ぎない、という前提です。
+
+公開鍵を authorized_keys へ追加
+
+{{{
+$ cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+$ chmod 600 ~/.ssh/authorized_keys
+}}}
+
+作成した秘密鍵をWinSCPなどでダウンロードします。
+秘密鍵はこのファイルです。
+
+{{{
+ ~/.ssh/id_dsa
+}}}
+
+Putty-Genで読み込み、Puttyでも利用できる形式に変換します。
+
+この結果できた秘密鍵と公開鍵を使用しないと将来的に踏み台サーバー
+を設置する際などに鍵の形式が合わない事による不都合が生じるかもしれません。
+
+なお、今回の手順はネットワーク越しに鍵を映しているのでセキュリティ的に問題があるのかもしれませんが、手軽にSSHの設定をする一つの手段として紹介しております。この手順で不都合が生じた場合があったとしても、当方は一切関知しません。
+
+公開鍵を配置し、パーミッションを変更する。
+
+{{{
+$ cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+$ chmod 700 ~/.ssh
+$ chmod 600 ~/.ssh/authorized_keys
+}}}
+
+公開鍵はこの時点で必要はないので削除します。
+
+{{{
+$ rm ~/.ssh/id_dsa.pub
+}}}
+
+認証方式をパスワード方式から鍵方式へ変更します。
+
+{{{
+$ su 
+# vim /etc/ssh/sshd_config
+}}}
+
+{{{
+PasswordAuthentication no
+}}}
+
+再起動
+
+{{{
+# /etc/init.d/ssh restart
+
+}}}
+
+
+== 確認 ==
+
+ログを監視
+
+{{{
+# tail -f /var/log/auth.log
+}}}
+
+この状態でroot権限でログインできない事を確認します。次のようなログが表示され、ログインに失敗する事を確認します。
+
+{{{
+No supported authentication methods available
+}}}
+
+次に一般ユーザーで鍵認証方式でログインできているかを確認します。次のようなログが表示されている事を確認して下さい。
+
+{{{
+Accepted publickey for homepage from xxx.xxx.xxx.xxx port 
+}}}
+
+

@@ -1,0 +1,126 @@
+= Linodeをはじめる =
+
+'''''以下、実際に私が申込みをした際に行った作業を記します。'''''
+
+== 申込方法 ==
+
+申込は次の手順で行えます。ただし、事前に[https://www.linode.com/avail.cfm データセンター]の空き状態を確認しておいて下さい。
+私がこのドキュメントを作成している最中は、残念ながらFremontのs360プランが売り切れのため540sのプランで申込みしました。
+
+ほとんどの人が日本から最も近い場所にある''Fremont, CA''の最安プラン360sを申込み希望だと思いますのでavailable(利用可能)となっている事を確認して下さい。
+
+=== LinodeのHPへ移動 ===
+
+ * [http://www.linode.com/?r=d856510ce8f69790ebc0d750d3a9f8d11cb1582f Linode] のサイトに行きます。
+ * 「Sign Up Now」のリンクをクリックします。 
+ 
+=== Sine Up/申込画面 ===
+
+項目を入力して下さい。パスワードは8文字以上にしておきたいところです。
+なお、住所の項目はそれほど厳密でなくても大丈夫です。
+
+実際のところ外国から日本への郵便は国名のJAPAN以外は日本語でも届きますので。
+
+日本国内在住の日本人場合、次を目安に入力して下さい。
+
+|| Linode.com Username	|| Linodeで使用するユーザーID ||
+|| Linode.com Password	|| Linodeで使用するPassword   ||
+|| E-Mail Address		|| 自分が現在使用しているE-Mailアドレス ||
+|| How did you hear about me? || アンケートです。よろしければ当サイトを入力して下さい||
+|| Company Name || optionalと書かれているので省略可能 ||
+|| Billing First Name || あなたの下の名前を入力して下さい。||
+|| Billing Last Name || あなたの上の名前を入力して下さい。||
+|| Billing Address || 例: 1-1-1 hogehoge-cho ||
+|| Billing Address2 || マンション名、省略可能 ||
+|| Billing City || 例: shibuya-ku, kanagawa-ku yokohama-shi ||
+|| Billing State || 例: tokyo, kanagawa ||
+|| Billing Zip/Postal Code || 例: 110-1234 ||
+|| Billing Country || JP - Japan ||
+|| Credit Card Number || クレジットカードの番号を入力して下さい ||
+|| Expiration Date || クレジットカードの有効期限を入力して下さい ||
+|| CVV || [http://www.etonya.com/orderform/cvv.html こちら]が参考になります。 ||
+|| Select your plan || 最初は360が無難です。fremontが売り切れになっていないか必ず確認しましょう ||
+|| Payment Term || 1か月だけ利用、1年間利用(10%Off)、2年間利用(15%Off) ||
+|| Referral Code || あつかましいのですが[[BR]]d856510ce8f69790ebc0d750d3a9f8d11cb1582f[[BR]]と入力頂けるとうれしいです。もちろん省略可能です。 ||
+|| Promotion Code || 省略可能 ||
+
+
+すべての項目を入力したらContinueをクリックすると確認画面へと進みます。 
+
+=== Complete Your Order/確認画面 ===
+
+内容を確認してComplete Orderボタンをクリックすると申し込みが完了します。 
+
+=== Conguratulations! ===
+
+申し込み完了です。
+
+Click here to log in! をクリックしてログイン画面へ遷移します。
+
+== ログイン ==
+
+=== Log into Linode.com/ログイン画面 ===
+
+申し込み時に入力した「Linode.com Username」と「Linode.com Password」を入力して「Log in」ボタンをクリックします。
+
+== Linode Manager/VPSの構築・管理 ==
+
+=== Welcome to Linode! ===
+
+最初にログインすると、最初にデータセンターの選択画面が表示されます。
+
+|| Data Center || Location || Available || Choose ||
+|| The Planet || Dallas, TX, USA || Yes || Place this Linode here ||
+|| Hurricane Electric || Fremont, CA, USA || Yes || Place this Linode here ||
+|| AtlantaNAP || Atlanta, GA, USAv || Yes || Place this Linode here ||
+|| Net Access Corporation || Newark, NJ, USA || Yes || Place this Linode here ||
+
+迷わず、Hurricane Electric  Fremont, CA, USA を選択しましょう。ただし、availableでないと利用できませんので
+お気をつけ下さい。
+
+データセンターを選択すると、Dashboardの画面が表示されているはずです。''Configuration Profiles''も''Disk Images''もまだ選択されていない状態です。
+
+''Deploy a Linux Distribution''をクリックしてディストリビューションの選択画面へ遷移します。
+
+=== Linode Distribution Wizard ===
+
+ここで自分好みのディストリビューションを選択して下さい。私は次のように設定しました。
+
+|| Select your Distribution || CentOS 5.3 550 MB ||
+|| Select Disk Image Size || 24320 MB ||
+|| Select Swap || Create New: 256 MB ||
+|| Root Password || 6～16文字の任意のパスワード ||
+
+''Create Profile'' をクリックして作業を完了します。
+
+=== 構築完了の確認 ===
+
+Create Profileを実行した後は再びDashboard画面へ戻ります。
+画面遷移後は画面中央にjob進行中の表示がされていると思いますのでこの作業が完了するまで待機します。
+
+実行されたjobは画面に表示されているので確認しておいて下さい。ここではCentOS5.3の構築のjobが表示されました。
+
+ * JobID: 1366025 - Linode Initial Configuration ( 1秒 )
+ * JobID: 1366064 - Disk Create From Distribution - CentOS 5.3 ( 31秒 )
+ * JobID: 1366065 - Create Filesystem - 256MB Swap Image ( 1秒 )
+
+これですぐにCentOS5.3を利用できるようになりました。
+慣れてしまえば2,3分で作業が完了しますので、他のディストリビューションを試したりする事もできます。
+
+== Time Zoneの変更 ==
+
+
+LinodeのメンバーページではCPUやメモリの稼働状況を確認する事ができます。
+ただし、時刻がアメリカ時間で表示されてしまうのでこれを日本時間に変更します。
+
+画面右上にある''my profile''をクリックして''My Profile''へ遷移します。
+
+=== My Profile ===
+
+Timezoneを(GMT+9) Japan へ変更して''Save timezone setting''をクリックして下さい。
+
+== CentOS5.3起動 ==
+
+まだCentOSが起動していない状態なので、Profileの右側にある''Boot''ボタンをクリックします。
+
+お疲れさまでした。以上でLinodeが利用できるようになりました。

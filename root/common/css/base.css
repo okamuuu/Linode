@@ -1,0 +1,88 @@
+@charset "utf-8";
+
+/* ---[ font ]--------------- */
+html,body{
+	font-size: small;
+	font-family: Verdana, Arial, "ＭＳ Ｐゴシック", "ヒラギノ角ゴ Pro W3", "Osaka", sans-serif;
+}
+
+/* ---[ font-size ]--------------- */
+h1{	font-size: 100%;}
+h2{	font-size: 100%;}
+h3{	font-size: 100%;}
+h4{	font-size: 100%;}
+h5{	font-size: 100%;}
+p {	font-size: 100%;}
+ul,li{ font-size: 100%}
+dl,dt,dd, pre { font-size: 100% }
+input, textarea, button{ font-size: 80% }
+
+/* ---[ line-height ]--------------- */
+h1,h2,h3,h4,h5,p{ line-height: 1.5em; }
+
+/* ---[ 初期化 ]--------------- */
+html,body, #wrap, #header, #content, #side-bar, #footer,
+h1,h2,h3,h4,h5,p,img,dl,dt,dd,ul,li{
+	margin: 0;
+	padding: 0; 
+	background: none;
+}
+
+/* ---[ 画像表示の位置を各ブラウザで統一する ]--------------- */
+img { vertical-align: bottom; }
+
+/* ---[ others ]--------------- */
+.float-left{ float: left;}
+.float-right{ float: right;}
+.hide { display: none;}
+.clear{ clear: both;}
+.text-right{ text-align: right;}
+.text-left{ text-align: right;}
+.text-center{ text-align: center;}
+.text-red { color: #FF0000; } 
+.text-uppercase { text-transform: uppercase; }
+.dot_underline { background: url(../images/dot_line.gif) repeat-x left bottom; }
+
+/* ---[ Existing in-line lebel element ]--------------- */
+strong {}
+em{
+	font-style: normal;
+	font-weight: bold;
+	background: url(../images/dot_line.gif) repeat-x left bottom;
+}
+
+/* ---[ anchor ]--------------- */
+a { color: #333333; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+a img { border: none; }
+a:hover img {}
+
+a[href $='.pdf'] {
+	padding: 4px 25px 4px 18px;
+	background: transparent url(../images/icon_pdf.gif) no-repeat center left;
+
+}
+
+a[href $='.xls'] {
+	padding: 4px 25px 4px 18px;
+	background: transparent url(../images/icon_xls.gif) no-repeat center left;
+
+}
+
+a[href $='.doc'] {
+	padding: 4px 25px 4px 18px;
+	background: transparent url(../images/icon_doc.gif) no-repeat center left;
+
+}
+
+a.ext-link {
+	padding-left: 16px;
+	background: url(../images/icon_link.gif) no-repeat center left;
+}
+
+a[href^="http:"]:after,
+a[href^="https:"]:after {
+	padding-left: 16px;
+	content: url(../images/icon_link.gif) no-repeat center left;
+}

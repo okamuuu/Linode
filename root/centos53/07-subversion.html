@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf8" />
+    <title>subversion | How to Linode</title>
+    <meta name="keywords" content="" />
+    <meta name="description" content="ソースコードのバージョン管理を行います。" />
+    <meta name="robots" content="all" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../common/css/import.css"/>
+</head>
+<body>
+	<div id="wrapper">
+		<div id="wrap">
+			<div id="header">
+				<p id="title"><a href="/">How to Linode</a></p>
+			</div>
+<!-- category[start] -->
+<ul id="tab">
+<li><a href="/" class="home">HOME</a></li>
+<li><a href="/centos53/" class="centos53 current">CentOS5.3</a></li>
+<li><a href="/debian50/" class="debian50">Debian5.0</a></li>
+</ul>
+<!-- category[end] -->
+
+<!-- bread[start] -->
+<p id="bread">
+<a href="/">home</a> &gt;
+subversion
+</p>
+<!-- bread[end] -->
+
+			<div id="side-bar">
+<!-- menu[start] -->
+<h3>初期設定</h3>
+<ul class="menu">
+    <li><a href="index.html">OS起動</a></li>
+    <li><a href="02-ssh.html">OpenSSH設定</a></li>
+    <li><a href="02-yum.html">yum最適化</a></li>
+    <li><a href="02-sudo.html">sudo導入</a></li>
+    <li><a href="02-vim.html">vi拡張</a></li>
+    <li><a href="02-screen.html">screen導入</a></li>
+    <li><a href="02-zsh.html">zsh導入</a></li>
+    <li><a href="02-ntpd.html">日付設定</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>Webサーバー構築</h3>
+<ul class="menu">
+    <li><a href="03-virtualhost.html">バーチャルホスト設定</a></li>
+    <li><a href="03-htdigest.html">認証ページ作成</a></li>
+    <li><a href="03-ssl.html">SSL通信</a></li>
+    <li><a href="03-fcgi.html">FCGI</a></li>
+    <li><a href="03-memcache.html">mamcache</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>メールサーバー構築</h3>
+<ul class="menu">
+    <li><a href="04-postfix.html">Postifx</a></li>
+    <li><a href="04-dovecot.html">dovecot</a></li>
+    <li><a href="04-mailx.html">mailコマンド導入</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>セキュリティ強化</h3>
+<ul class="menu">
+    <li><a href="05-tripwire.html">Tripwire</a></li>
+    <li><a href="05-chkrootkit.html">chkrootkit</a></li>
+    <li><a href="05-snort.html">Snort + Oinkmaster</a></li>
+    <li><a href="05-swatch.html">SWATCH</a></li>
+    <li><a href="05-clam.html">Clam AntiVirus</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>DBサーバー構築</h3>
+<ul class="menu">
+    <li><a href="06-mysql.html">MySQL導入</a></li>
+    <li><a href="06-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>開発者向けツール導入</h3>
+<ul class="menu">
+    <li><a href="07-subversion.html">subversion</a></li>
+    <li><a href="07-trac.html">Trac</a></li>
+    <li><a href="07-hotcopy_svn_trac.html">Trac & SVN バックアップ</a></li>
+    <li><a href="07-git.html">git</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>バックアップ強化</h3>
+<ul class="menu">
+    <li><a href="08-backup.html">自動バックアップ</a></li>
+    <li><a href="08-subversion.html">MySQL導入</a></li>
+    <li><a href="08-cwRsync.html">rsyncクライアント導入</a></li>
+    <li><a href="08-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+			</div>
+		    <div id="content">
+		        <h1 id="subversion">subversion</h1>
+<p id="description">ソースコードのバージョン管理を行います。</p>
+<h2 id="インストール">インストール</h2>
+<pre class="wiki">
+% sudo yum install subversion
+</pre>
+<h2 id="subversionリポジトリを準備">subversionリポジトリを準備</h2>
+<pre class="wiki">
+% sudo mkdir -p /var/svn
+% cd /var/svn
+</pre>
+<pre class="wiki">
+% sudo svnadmin create /var/svn/Root
+% sudo chown -R apache:apache /var/svn/Root
+</pre>
+<pre class="wiki">
+% ls /var/svn/Root
+README.txt  conf  dav  db  format  hooks  locks
+</pre>
+<h2 id="http経由でアクセスする">http経由でアクセスする</h2>
+<p>
+VirtualHostの設定
+</p>
+<pre class="wiki">
+&lt;VirtualHost *:80&gt;
+    ServerName svn.mydomain.com
+    ServerAdmin webmaster@mydomain
+    HostnameLookups Off
+
+    &lt;Location /&gt;
+
+       Order deny,allow
+       Deny from all
+       
+       ### アクセス制限
+#       Allow from 127.0.0.1
+#       Allow from 192.168.1.0/24 
+
+       DAV svn
+       SVNPath /var/svn/Root
+
+       # Limit write permission to list of valid users.
+       &lt;LimitExcept GET PROPFIND OPTIONS REPORT&gt;
+           AuthType Digest
+           AuthName svn_users
+           AuthUserFile /var/svn/users.htdigest
+           Require valid-user
+       &lt;/LimitExcept&gt;
+
+    &lt;/Location&gt;
+&lt;/VirtualHost&gt;
+</pre>
+<p>
+変更された設定を反映させる
+</p>
+<pre class="wiki">
+% sudo /sbin/service httpd restart
+</pre>
+<h2 id="htdigest認証用ユーザー登録">htdigest認証用ユーザー登録</h2>
+<p>
+subversion用のユーザーを作成
+<tt>
+% sudo htdigest -c /var/svn/users.htdigest svn_users svnuser
+</tt>
+</p>
+
+		    </div>
+			<br class="clear" />
+			<div id="footer">
+				<p>
+					<a href="http://linode.jp">Linode</a> | 
+					<a href="http://www.add9.biz/phpunit">PHPUnit</a> | 
+					<a href="http://www.add9.biz/symfony">Symfony</a>
+					<br />
+				
+					<a href="http://www.add9.biz/c">C</a> | 
+					<a href="http://www.add9.biz/moose">Moose</a> | 
+					<a href="http://www.add9.biz/design_pattern">Design Pattern</a>
+					<br />
+
+					<a href="http://www.add9.biz/jump">Jump Attack Forum</a> | 
+					<a href="http://dancepod.tv">DancePod.tv</a>
+				</p>
+			</div>
+	    </div>
+		<div id="adsence">
+			<script type="text/javascript"><!--
+			google_ad_client = "pub-3627018862025650";
+			google_ad_slot = "0294735282";
+			google_ad_width = 160;
+			google_ad_height = 600;
+			//-->
+			</script>
+			<script type="text/javascript"
+			src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+			</script>
+		</div>
+	</div>
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-7965172-1");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf8" />
+    <title>Linodeをはじめる | How to Linode</title>
+    <meta name="keywords" content="Fremont, CA, Configuration Profiles, Disk Images, Deploy a Linux Distribution, Create Profile, my profile, My Profile, Save timezone setting, Boot" />
+    <meta name="description" content="以下、実際に私が申込みをした際に行った作業を記します。" />
+    <meta name="robots" content="all" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="common/css/import.css"/>
+</head>
+<body>
+	<div id="wrapper">
+		<div id="wrap">
+			<div id="header">
+				<p id="title"><a href="/">How to Linode</a></p>
+			</div>
+<!-- category[start] -->
+<ul id="tab">
+<li><a href="/" class="home current">HOME</a></li>
+<li><a href="/centos53/" class="centos53">CentOS5.3</a></li>
+<li><a href="/debian50/" class="debian50">Debian5.0</a></li>
+</ul>
+<!-- category[end] -->
+
+<!-- bread[start] -->
+<p id="bread">
+<a href="/">home</a> &gt;
+<a href="/home">home</a> &gt;
+Linodeをはじめる
+</p>
+<!-- bread[end] -->
+
+			<div id="side-bar">
+<!-- menu[start] -->
+<h3>README</h3>
+<ul class="menu">
+    <li><a href="index.html">はじめに</a></li>
+    <li><a href="01-about_linode.html">Linodeについて</a></li>
+    <li><a href="01-start_linode.html">Linodeをはじめる</a></li>
+    <li><a href="01-dns_setup.html">LinodeのDNSサーバーを利用</a></li>
+</ul>
+<!-- menu[end] -->
+
+			</div>
+		    <div id="content">
+		        <h1 id="Linodeをはじめる">Linodeをはじめる</h1>
+<p id="description">以下、実際に私が申込みをした際に行った作業を記します。</p>
+<h2 id="申込方法">申込方法</h2>
+<p>
+申込は次の手順で行えます。ただし、事前に<a class="ext-link" href="https://www.linode.com/avail.cfm"><span class="icon"></span>データセンター</a>の空き状態を確認しておいて下さい。
+私がこのドキュメントを作成している最中は、残念ながらFremontのs360プランが売り切れのため540sのプランで申込みしました。
+</p>
+<p>
+ほとんどの人が日本から最も近い場所にある<em>Fremont, CA</em>の最安プラン360sを申込み希望だと思いますのでavailable(利用可能)となっている事を確認して下さい。
+</p>
+<h3 id="LinodeのHPへ移動">LinodeのHPへ移動</h3>
+<ul><li><a class="ext-link" href="http://www.linode.com/?r=d856510ce8f69790ebc0d750d3a9f8d11cb1582f"><span class="icon"></span>Linode</a> のサイトに行きます。
+</li><li>「Sign Up Now」のリンクをクリックします。 </li></ul>
+<p>
+</p>
+<h3 id="SineUp/申込画面">Sine Up/申込画面</h3>
+<p>
+項目を入力して下さい。パスワードは8文字以上にしておきたいところです。
+なお、住所の項目はそれほど厳密でなくても大丈夫です。
+</p>
+<p>
+実際のところ外国から日本への郵便は国名のJAPAN以外は日本語でも届きますので。
+</p>
+<p>
+日本国内在住の日本人場合、次を目安に入力して下さい。
+</p>
+<table>
+<tr><td> Linode.com Username	</td><td> Linodeで使用するユーザーID </td></tr>
+<tr><td> Linode.com Password	</td><td> Linodeで使用するPassword   </td></tr>
+<tr><td> E-Mail Address		</td><td> 自分が現在使用しているE-Mailアドレス </td></tr>
+<tr><td> How did you hear about me? </td><td> アンケートです。よろしければ当サイトを入力して下さい</td></tr>
+<tr><td> Company Name </td><td> optionalと書かれているので省略可能 </td></tr>
+<tr><td> Billing First Name </td><td> あなたの下の名前を入力して下さい。</td></tr>
+<tr><td> Billing Last Name </td><td> あなたの上の名前を入力して下さい。</td></tr>
+<tr><td> Billing Address </td><td> 例: 1-1-1 hogehoge-cho </td></tr>
+<tr><td> Billing Address2 </td><td> マンション名、省略可能 </td></tr>
+<tr><td> Billing City </td><td> 例: shibuya-ku, kanagawa-ku yokohama-shi </td></tr>
+<tr><td> Billing State </td><td> 例: tokyo, kanagawa </td></tr>
+<tr><td> Billing Zip/Postal Code </td><td> 例: 110-1234 </td></tr>
+<tr><td> Billing Country </td><td> JP - Japan </td></tr>
+<tr><td> Credit Card Number </td><td> クレジットカードの番号を入力して下さい </td></tr>
+<tr><td> Expiration Date </td><td> クレジットカードの有効期限を入力して下さい </td></tr>
+<tr><td> CVV </td><td> <a class="ext-link" href="http://www.etonya.com/orderform/cvv.html"><span class="icon"></span>こちら</a>が参考になります。 </td></tr>
+<tr><td> Select your plan </td><td> 最初は360が無難です。fremontが売り切れになっていないか必ず確認しましょう </td></tr>
+<tr><td> Payment Term </td><td> 1か月だけ利用、1年間利用(10%Off)、2年間利用(15%Off) </td></tr>
+<tr><td> Referral Code </td><td> あつかましいのですが<br />d856510ce8f69790ebc0d750d3a9f8d11cb1582f<br />と入力頂けるとうれしいです。もちろん省略可能です。 </td></tr>
+<tr><td> Promotion Code </td><td> 省略可能 </td></tr>
+</table>
+<p>
+すべての項目を入力したらContinueをクリックすると確認画面へと進みます。 
+</p>
+<h3 id="CompleteYourOrder/確認画面">Complete Your Order/確認画面</h3>
+<p>
+内容を確認してComplete Orderボタンをクリックすると申し込みが完了します。 
+</p>
+<h3 id="Conguratulations">Conguratulations!</h3>
+<p>
+申し込み完了です。
+</p>
+<p>
+Click here to log in! をクリックしてログイン画面へ遷移します。
+</p>
+<h2 id="ログイン">ログイン</h2>
+<h3 id="LogintoLinode.com/ログイン画面">Log into Linode.com/ログイン画面</h3>
+<p>
+申し込み時に入力した「Linode.com Username」と「Linode.com Password」を入力して「Log in」ボタンをクリックします。
+</p>
+<h2 id="LinodeManager/VPSの構築・管理">Linode Manager/VPSの構築・管理</h2>
+<h3 id="WelcometoLinode">Welcome to Linode!</h3>
+<p>
+最初にログインすると、最初にデータセンターの選択画面が表示されます。
+</p>
+<table>
+<tr><td> Data Center </td><td> Location </td><td> Available </td><td> Choose </td></tr>
+<tr><td> The Planet </td><td> Dallas, TX, USA </td><td> Yes </td><td> Place this Linode here </td></tr>
+<tr><td> Hurricane Electric </td><td> Fremont, CA, USA </td><td> Yes </td><td> Place this Linode here </td></tr>
+<tr><td> AtlantaNAP </td><td> Atlanta, GA, USAv </td><td> Yes </td><td> Place this Linode here </td></tr>
+<tr><td> Net Access Corporation </td><td> Newark, NJ, USA </td><td> Yes </td><td> Place this Linode here </td></tr>
+</table>
+<p>
+迷わず、Hurricane Electric  Fremont, CA, USA を選択しましょう。ただし、availableでないと利用できませんので
+お気をつけ下さい。
+</p>
+<p>
+データセンターを選択すると、Dashboardの画面が表示されているはずです。<em>Configuration Profiles</em>も<em>Disk Images</em>もまだ選択されていない状態です。
+</p>
+<p>
+<em>Deploy a Linux Distribution</em>をクリックしてディストリビューションの選択画面へ遷移します。
+</p>
+<h3 id="LinodeDistributionWizard">Linode Distribution Wizard</h3>
+<p>
+ここで自分好みのディストリビューションを選択して下さい。私は次のように設定しました。
+</p>
+<table>
+<tr><td> Select your Distribution </td><td> CentOS 5.3 550 MB </td></tr>
+<tr><td> Select Disk Image Size </td><td> 24320 MB </td></tr>
+<tr><td> Select Swap </td><td> Create New: 256 MB </td></tr>
+<tr><td> Root Password </td><td> 6～16文字の任意のパスワード </td></tr>
+</table>
+<p>
+<em>Create Profile</em> をクリックして作業を完了します。
+</p>
+<h3 id="構築完了の確認">構築完了の確認</h3>
+<p>
+Create Profileを実行した後は再びDashboard画面へ戻ります。
+画面遷移後は画面中央にjob進行中の表示がされていると思いますのでこの作業が完了するまで待機します。
+</p>
+<p>
+実行されたjobは画面に表示されているので確認しておいて下さい。ここではCentOS5.3の構築のjobが表示されました。
+</p>
+<ul><li>JobID: 1366025 - Linode Initial Configuration ( 1秒 )
+</li><li>JobID: 1366064 - Disk Create From Distribution - CentOS 5.3 ( 31秒 )
+</li><li>JobID: 1366065 - Create Filesystem - 256MB Swap Image ( 1秒 )</li></ul>
+<p>
+これですぐにCentOS5.3を利用できるようになりました。
+慣れてしまえば2,3分で作業が完了しますので、他のディストリビューションを試したりする事もできます。
+</p>
+<h2 id="TimeZoneの変更">Time Zoneの変更</h2>
+<p>
+LinodeのメンバーページではCPUやメモリの稼働状況を確認する事ができます。
+ただし、時刻がアメリカ時間で表示されてしまうのでこれを日本時間に変更します。
+</p>
+<p>
+画面右上にある<em>my profile</em>をクリックして<em>My Profile</em>へ遷移します。
+</p>
+<h3 id="MyProfile">My Profile</h3>
+<p>
+Timezoneを(GMT+9) Japan へ変更して<em>Save timezone setting</em>をクリックして下さい。
+</p>
+<h2 id="CentOS5.3起動">CentOS5.3起動</h2>
+<p>
+まだCentOSが起動していない状態なので、Profileの右側にある<em>Boot</em>ボタンをクリックします。
+</p>
+<p>
+お疲れさまでした。以上でLinodeが利用できるようになりました。
+</p>
+
+		    </div>
+			<br class="clear" />
+			<div id="footer">
+				<p>
+					<a href="http://linode.jp">Linode</a> | 
+					<a href="http://www.add9.biz/phpunit">PHPUnit</a> | 
+					<a href="http://www.add9.biz/symfony">Symfony</a>
+					<br />
+				
+					<a href="http://www.add9.biz/c">C</a> | 
+					<a href="http://www.add9.biz/moose">Moose</a> | 
+					<a href="http://www.add9.biz/design_pattern">Design Pattern</a>
+					<br />
+
+					<a href="http://www.add9.biz/jump">Jump Attack Forum</a> | 
+					<a href="http://dancepod.tv">DancePod.tv</a>
+				</p>
+			</div>
+	    </div>
+		<div id="adsence">
+			<script type="text/javascript"><!--
+			google_ad_client = "pub-3627018862025650";
+			google_ad_slot = "0294735282";
+			google_ad_width = 160;
+			google_ad_height = 600;
+			//-->
+			</script>
+			<script type="text/javascript"
+			src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+			</script>
+		</div>
+	</div>
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-7965172-1");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+</body>
+</html>

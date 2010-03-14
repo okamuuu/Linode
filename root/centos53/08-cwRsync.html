@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf8" />
+    <title>rsyncクライアント導入 | How to Linode</title>
+    <meta name="keywords" content="cwRsync, cwrsync.cmd, Startup Impact" />
+    <meta name="description" content="Linodeに万が一障害が発生した場合に備えてデータのバックアップを取得します。" />
+    <meta name="robots" content="all" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../common/css/import.css"/>
+</head>
+<body>
+	<div id="wrapper">
+		<div id="wrap">
+			<div id="header">
+				<p id="title"><a href="/">How to Linode</a></p>
+			</div>
+<!-- category[start] -->
+<ul id="tab">
+<li><a href="/" class="home">HOME</a></li>
+<li><a href="/centos53/" class="centos53 current">CentOS5.3</a></li>
+<li><a href="/debian50/" class="debian50">Debian5.0</a></li>
+</ul>
+<!-- category[end] -->
+
+<!-- bread[start] -->
+<p id="bread">
+<a href="/">home</a> &gt;
+rsyncクライアント導入
+</p>
+<!-- bread[end] -->
+
+			<div id="side-bar">
+<!-- menu[start] -->
+<h3>初期設定</h3>
+<ul class="menu">
+    <li><a href="index.html">OS起動</a></li>
+    <li><a href="02-ssh.html">OpenSSH設定</a></li>
+    <li><a href="02-yum.html">yum最適化</a></li>
+    <li><a href="02-sudo.html">sudo導入</a></li>
+    <li><a href="02-vim.html">vi拡張</a></li>
+    <li><a href="02-screen.html">screen導入</a></li>
+    <li><a href="02-zsh.html">zsh導入</a></li>
+    <li><a href="02-ntpd.html">日付設定</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>Webサーバー構築</h3>
+<ul class="menu">
+    <li><a href="03-virtualhost.html">バーチャルホスト設定</a></li>
+    <li><a href="03-htdigest.html">認証ページ作成</a></li>
+    <li><a href="03-ssl.html">SSL通信</a></li>
+    <li><a href="03-fcgi.html">FCGI</a></li>
+    <li><a href="03-memcache.html">mamcache</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>メールサーバー構築</h3>
+<ul class="menu">
+    <li><a href="04-postfix.html">Postifx</a></li>
+    <li><a href="04-dovecot.html">dovecot</a></li>
+    <li><a href="04-mailx.html">mailコマンド導入</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>セキュリティ強化</h3>
+<ul class="menu">
+    <li><a href="05-tripwire.html">Tripwire</a></li>
+    <li><a href="05-chkrootkit.html">chkrootkit</a></li>
+    <li><a href="05-snort.html">Snort + Oinkmaster</a></li>
+    <li><a href="05-swatch.html">SWATCH</a></li>
+    <li><a href="05-clam.html">Clam AntiVirus</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>DBサーバー構築</h3>
+<ul class="menu">
+    <li><a href="06-mysql.html">MySQL導入</a></li>
+    <li><a href="06-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>開発者向けツール導入</h3>
+<ul class="menu">
+    <li><a href="07-subversion.html">subversion</a></li>
+    <li><a href="07-trac.html">Trac</a></li>
+    <li><a href="07-hotcopy_svn_trac.html">Trac & SVN バックアップ</a></li>
+    <li><a href="07-git.html">git</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>バックアップ強化</h3>
+<ul class="menu">
+    <li><a href="08-backup.html">自動バックアップ</a></li>
+    <li><a href="08-subversion.html">MySQL導入</a></li>
+    <li><a href="08-cwRsync.html">rsyncクライアント導入</a></li>
+    <li><a href="08-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+			</div>
+		    <div id="content">
+		        <h1 id="rsyncクライアント導入">rsyncクライアント導入</h1>
+<p id="description">Linodeに万が一障害が発生した場合に備えてデータのバックアップを取得します。</p>
+<h2 id="cwRsyncインストール">cwRsyncインストール</h2>
+<p>
+Windows上で動作する<a class="ext-link" href="http://www.itefix.no/i2/node/10650"><span class="icon"></span>rsyncクライアント</a>である<em>cwRsync</em>をダウンロードします。
+</p>
+<p>
+ダウンロードしたzipファイルを解凍してでてきたインストーラを実行してインストールして下さい。2009年9月の時点では
+最新バージョンは3.1.0のようです。
+</p>
+<h2 id="cwRsync用の公開鍵と秘密鍵を作成">cwRsync用の公開鍵と秘密鍵を作成</h2>
+<p>
+cwRsyncでサーバーへログインする際に使用する鍵ペアを作成します。
+以下はWindowsXPの場合です。
+</p>
+<p>
+※当サイト管理人は自宅が固定IPの為、パスフレーズなしの鍵ペアを作成しています。
+</p>
+<pre class="wiki">
+C:\&gt;cd C:\Program Files\cwRsync\bin
+C:\Program Files\cwRsync\bin&gt;ssh-keygen -t rsa -N &quot;&quot;　←　パスフレーズなし鍵ペア作成
+Generating public/private rsa key pair.
+Enter file in which to save the key (/cygdrive/c/Documents and Settings/ユーザ名/.ssh/id_rsa):　←　空ENTER
+Your identification has been saved in /cygdrive/c/Documents and Settings/ユーザ名/.ssh/id_rsa.
+Your public key has been saved in /cygdrive/c/Documents and Settings/ユーザ名/.ssh/id_rsa.pub.
+The key fingerprint is:
+f7:e0:7c:bd:75:eb:0a:73:26:35:47:b0:64:ce:e0:27 ユーザ名@ホスト名
+</pre>
+<h2 id="バックアップ専用ユーザーを作成">バックアップ専用ユーザーを作成</h2>
+<p>
+バックアップユーザーを作成します。
+</p>
+<h2 id="公開鍵をサーバーに設定する">公開鍵をサーバーに設定する</h2>
+<p>
+バックアップユーザーとして次の作業を行います。
+ここではバックアップユーザーをmybackupと仮定します。
+</p>
+<pre class="wiki">
+% sudo mybackup
+% mkdir -p ~/.ssh
+% chmod 700 ~/.ssh/
+% '公開鍵' &gt;&gt; ~/.ssh/authorized_keys
+% chmod 600 ~/.ssh/authorized_keys
+% chown -R mybackup:mybackup ~/.ssh/
+}
+
+== ログイン制限 ==
+
+万が一秘密鍵が第三者に入手された場合を想定し、この鍵でログインできるIP元を制限します。
+
+{{{
+%sudo vi /etc/hosts
+222.333.xxx.xx.xxx backup-client
+</pre>
+<pre class="wiki">
+% vi ~/.ssh/authorized_keys
+from=&quot;backup-client&quot; ssh-rsa ...	# ← ssh-rsaの前にfromでホスト名を指定します。
+</pre>
+<h2 id="バックアップ取得コマンドを作成">バックアップ取得コマンドを作成</h2>
+<p>
+C:\Program Files\cwRsync\cwrsync.cmdを任意の場所にコピーして最終行に下記を追記します。
+</p>
+<pre class="wiki">
+SET USER=mybackup
+SET SERVER=linode.jp
+SET BACKUP=linode.jp.backup.tar.bz2
+rsync -avz -e ssh --delete %USER%@%SERVER%:/backup/%BACKUP% %SERVER%.%BACKUP% &gt; cwrsync.log
+</pre>
+<h2 id="バックアップ取得確認">バックアップ取得確認</h2>
+<p>
+作成したバックアップ取得コマンド<em>cwrsync.cmd</em>を実行し、バックアップができているかどうかを確認します。
+最初の一回目はyes応答が必要ですが次回からは不要です。
+</p>
+<h2 id="バックアップ取得の自動実行を設定">バックアップ取得の自動実行を設定</h2>
+<p>
+私の場合、Windows の起動直後は負荷がかかるため、Windows 起動の10分後にバックアップできるようにしました。
+スタートアップ管理ソフト<em>Startup Impact</em>などを各自でインストールして下さい。
+</p>
+<p>
+<a class="ext-link" href="http://www.vector.co.jp/soft/win95/util/se120334.html"><span class="icon"></span>Startup Impactのダウンロード</a>
+</p>
+<p>
+もちろんWindowsの[スタート]→[全てのプログラム]→[スタートアップ]にショートカットを置いても構わないと思います。
+</p>
+
+		    </div>
+			<br class="clear" />
+			<div id="footer">
+				<p>
+					<a href="http://linode.jp">Linode</a> | 
+					<a href="http://www.add9.biz/phpunit">PHPUnit</a> | 
+					<a href="http://www.add9.biz/symfony">Symfony</a>
+					<br />
+				
+					<a href="http://www.add9.biz/c">C</a> | 
+					<a href="http://www.add9.biz/moose">Moose</a> | 
+					<a href="http://www.add9.biz/design_pattern">Design Pattern</a>
+					<br />
+
+					<a href="http://www.add9.biz/jump">Jump Attack Forum</a> | 
+					<a href="http://dancepod.tv">DancePod.tv</a>
+				</p>
+			</div>
+	    </div>
+		<div id="adsence">
+			<script type="text/javascript"><!--
+			google_ad_client = "pub-3627018862025650";
+			google_ad_slot = "0294735282";
+			google_ad_width = 160;
+			google_ad_height = 600;
+			//-->
+			</script>
+			<script type="text/javascript"
+			src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+			</script>
+		</div>
+	</div>
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-7965172-1");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+</body>
+</html>

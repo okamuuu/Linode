@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf8" />
+    <title>OpenSSH設定 | How to Linode</title>
+    <meta name="keywords" content="SSH接続" />
+    <meta name="description" content="WEBサーバーを公開直後はセキュリティ対策が全く施されていない為、全く無防備な状態です。最初に最低限必要なセキュリティ対策を行います。" />
+    <meta name="robots" content="all" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../common/css/import.css"/>
+</head>
+<body>
+	<div id="wrapper">
+		<div id="wrap">
+			<div id="header">
+				<p id="title"><a href="/">How to Linode</a></p>
+			</div>
+<!-- category[start] -->
+<ul id="tab">
+<li><a href="/" class="home">HOME</a></li>
+<li><a href="/centos53/" class="centos53 current">CentOS5.3</a></li>
+<li><a href="/debian50/" class="debian50">Debian5.0</a></li>
+</ul>
+<!-- category[end] -->
+
+<!-- bread[start] -->
+<p id="bread">
+<a href="/">home</a> &gt;
+OpenSSH設定
+</p>
+<!-- bread[end] -->
+
+			<div id="side-bar">
+<!-- menu[start] -->
+<h3>初期設定</h3>
+<ul class="menu">
+    <li><a href="index.html">OS起動</a></li>
+    <li><a href="02-ssh.html">OpenSSH設定</a></li>
+    <li><a href="02-yum.html">yum最適化</a></li>
+    <li><a href="02-sudo.html">sudo導入</a></li>
+    <li><a href="02-vim.html">vi拡張</a></li>
+    <li><a href="02-screen.html">screen導入</a></li>
+    <li><a href="02-zsh.html">zsh導入</a></li>
+    <li><a href="02-ntpd.html">日付設定</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>Webサーバー構築</h3>
+<ul class="menu">
+    <li><a href="03-virtualhost.html">バーチャルホスト設定</a></li>
+    <li><a href="03-htdigest.html">認証ページ作成</a></li>
+    <li><a href="03-ssl.html">SSL通信</a></li>
+    <li><a href="03-fcgi.html">FCGI</a></li>
+    <li><a href="03-memcache.html">mamcache</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>メールサーバー構築</h3>
+<ul class="menu">
+    <li><a href="04-postfix.html">Postifx</a></li>
+    <li><a href="04-dovecot.html">dovecot</a></li>
+    <li><a href="04-mailx.html">mailコマンド導入</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>セキュリティ強化</h3>
+<ul class="menu">
+    <li><a href="05-tripwire.html">Tripwire</a></li>
+    <li><a href="05-chkrootkit.html">chkrootkit</a></li>
+    <li><a href="05-snort.html">Snort + Oinkmaster</a></li>
+    <li><a href="05-swatch.html">SWATCH</a></li>
+    <li><a href="05-clam.html">Clam AntiVirus</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>DBサーバー構築</h3>
+<ul class="menu">
+    <li><a href="06-mysql.html">MySQL導入</a></li>
+    <li><a href="06-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>開発者向けツール導入</h3>
+<ul class="menu">
+    <li><a href="07-subversion.html">subversion</a></li>
+    <li><a href="07-trac.html">Trac</a></li>
+    <li><a href="07-hotcopy_svn_trac.html">Trac & SVN バックアップ</a></li>
+    <li><a href="07-git.html">git</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>バックアップ強化</h3>
+<ul class="menu">
+    <li><a href="08-backup.html">自動バックアップ</a></li>
+    <li><a href="08-subversion.html">MySQL導入</a></li>
+    <li><a href="08-cwRsync.html">rsyncクライアント導入</a></li>
+    <li><a href="08-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+			</div>
+		    <div id="content">
+		        <h1 id="OpenSSH設定">OpenSSH設定</h1>
+<p id="description">WEBサーバーを公開直後はセキュリティ対策が全く施されていない為、全く無防備な状態です。<br />最初に最低限必要なセキュリティ対策を行います。</p>
+<h2 id="SSHアクセス元の規制">SSHアクセス元の規制</h2>
+<p>
+この時点ではSSHポートに対して誰でもアクセスできる状態です。最初に自分が使用しているISP以外からはアクセスできないように規制します。
+</p>
+<p>
+過去のログインユーザー一覧情報を表示して、自身が利用しているISPを確認します。
+<tt>
+# last -a
+</tt>
+</p>
+<p>
+ここでは xx123-45-658-151.xxx.example.ne.jpと表示されていたと仮定します。
+</p>
+<p>
+ログインしたユーザー名のホスト名が表示されます。次に/etc/hosts.denyを編集します。なお、Linodeで提供されているCentOS5.3はデフォルトではviが使えないので変わりにvimコマンド使用します。
+</p>
+<p>
+/etc/hosts.denyを編集します。
+</p>
+<pre class="wiki">
+# vim /etc/hosts.deny
+</pre>
+<p>
+次の行を追記します。
+</p>
+<pre class="wiki">
+All: All
+</pre>
+<p>
+/etc/hosts.allowを編集します
+</p>
+<pre class="wiki">
+# vim /etc/hosts.allow
+</pre>
+<p>
+次の行を追記します。
+</p>
+<pre class="wiki">
+SSHD: All .example.ne.jp
+</pre>
+<p>
+ひとまずあなたが契約しているISP経由でないと<em>SSH接続</em>ができないようになりました。
+</p>
+<h2 id="一般ユーザー作成">一般ユーザー作成</h2>
+<p>
+一般ユーザーhomepageを作成し、パスワードを設定します。
+</p>
+<pre class="wiki">
+# useradd homepage
+# passwd homepage
+Changing password for user homepage.
+New UNIX password:
+Retype new UNIX password:
+passwd: all authentication tokens updated successfully.
+</pre>
+<h2 id="認証方式を変更">認証方式を変更</h2>
+<p>
+sshの設定ファイルを編集し、認証方式を次のように変更します。
+</p>
+<ul><li>rootユーザーでのリモートログインを禁止する。
+</li><li>鍵認証でのログインに切り替える。
+</li><li>空パスワードを禁止</li></ul>
+<pre class="wiki">
+# vim /etc/ssh/sshd_config
+</pre>
+<p>
+以下の項目を次の様に設定します。PasswordAuthenticationは最初にWinSCPで秘密鍵の転送を
+行う必要があるため最初は無効にします。
+</p>
+<pre class="wiki">
+PermitRootLogin no
+#PasswordAuthentication no
+PermitEmptyPasswords no
+</pre>
+<p>
+sshdを再起動します。
+</p>
+<pre class="wiki">
+# /sbin/service sshd restart
+</pre>
+<p>
+一般ユーザーに変更
+一般ユーザーのホームディレクトリに個別ユーザー用の設定ディレクトリを設置します。
+</p>
+<pre class="wiki">
+# su homepage
+$ mkdir ~/.ssh
+</pre>
+<p>
+鍵作成 
+</p>
+<pre class="wiki">
+$ cd ~/.ssh
+$ ssh-keygen -t dsa
+...
+</pre>
+<p>
+公開鍵を authorized_keys へ追加
+</p>
+<pre class="wiki">
+$ cat ~/.ssh/id_dsa.pub &gt;&gt; ~/.ssh/authorized_keys
+$ chmod 600 ~/.ssh/authorized_keys
+</pre>
+<p>
+作成した秘密鍵をWinSCPなどでダウンロードします。
+秘密鍵はこのファイルです。
+</p>
+<pre class="wiki">
+ ~/.ssh/id_dsa
+</pre>
+<p>
+ここで作成された秘密鍵はid_dsaはローカルで保存しておけばよいので削除しておきます。
+</p>
+<pre class="wiki">
+$ rm  ~/.ssh/id_dsa
+</pre>
+<p>
+Putty-Genで読み込み、Puttyでも利用できる形式に変換します。
+</p>
+<p>
+この結果できた秘密鍵と公開鍵を使用しないと将来的に踏み台サーバー
+を設置する際などに鍵の形式が合わない事による不都合が生じるかもしれません。
+</p>
+<p>
+なお、今回の手順はセキュリティ的に問題があるのかもしれませんが、手軽に
+SSHの設定をする一つの手段として紹介しております。この手順で不都合が生じた場合があったとしても、当方は一切関知しません。
+</p>
+<p>
+公開鍵を配置し、パーミッションを変更する。
+</p>
+<pre class="wiki">
+$ cat ~/.ssh/id_dsa.pub &gt;&gt; ~/.ssh/authorized_keys
+$ chmod 700 ~/.ssh
+$ chmod 600 ~/.ssh/authorized_keys
+</pre>
+<p>
+公開鍵もこの時点で必要はないので削除します。
+</p>
+<pre class="wiki">
+$ rm ~/.ssh/id_dsa.pub
+</pre>
+<p>
+認証方式をパスワード方式から鍵方式へ変更します。
+</p>
+<pre class="wiki">
+$ su
+# vim /etc/ssh/sshd_config
+</pre>
+<pre class="wiki">
+PasswordAuthentication no
+</pre>
+<p>
+再起動
+</p>
+<pre class="wiki">
+# /sbin/service sshd restart
+</pre>
+<h2 id="確認">確認</h2>
+<p>
+ログを監視
+</p>
+<pre class="wiki">
+# tail -f /var/log/secure
+</pre>
+<p>
+この状態でroot権限でログインできない事を確認します。次のようなログが表示され、ログインに失敗する事を確認します。
+</p>
+<pre class="wiki">
+No supported authentication methods available
+</pre>
+<p>
+次に一般ユーザーで鍵認証方式でログインできているかを確認します。次のようなログが表示されている事を確認して下さい。
+</p>
+<pre class="wiki">
+Accepted publickey for homepage from xxx.xxx.xxx.xxx port 
+</pre>
+
+		    </div>
+			<br class="clear" />
+			<div id="footer">
+				<p>
+					<a href="http://linode.jp">Linode</a> | 
+					<a href="http://www.add9.biz/phpunit">PHPUnit</a> | 
+					<a href="http://www.add9.biz/symfony">Symfony</a>
+					<br />
+				
+					<a href="http://www.add9.biz/c">C</a> | 
+					<a href="http://www.add9.biz/moose">Moose</a> | 
+					<a href="http://www.add9.biz/design_pattern">Design Pattern</a>
+					<br />
+
+					<a href="http://www.add9.biz/jump">Jump Attack Forum</a> | 
+					<a href="http://dancepod.tv">DancePod.tv</a>
+				</p>
+			</div>
+	    </div>
+		<div id="adsence">
+			<script type="text/javascript"><!--
+			google_ad_client = "pub-3627018862025650";
+			google_ad_slot = "0294735282";
+			google_ad_width = 160;
+			google_ad_height = 600;
+			//-->
+			</script>
+			<script type="text/javascript"
+			src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+			</script>
+		</div>
+	</div>
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-7965172-1");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+</body>
+</html>

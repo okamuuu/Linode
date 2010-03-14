@@ -1,0 +1,98 @@
+= サービス確認 =
+
+'''''現在動作中のサービスを確認します'''''
+
+== service導入 ==
+
+''RedHat''系ユーザーにとっては驚く事かもしれませんがdebianにはchkconfigとserviceがはいっていません。ですのでこれを最初にインストールします。
+
+{{{
+$ sudo aptitude update
+$ sudo aptitude install chkconfig
+
+}}}
+
+/sbin/chkconfigを使って、サーバーが起動したら自動的に立ち上がるプロセスを確認してみます。
+
+{{{
+% sudo /sbin/chkconfig --all
+bootlogd               on
+bootmisc.sh            on
+checkfs.sh             on
+checkroot.sh           on
+cron                   on
+glibc.sh               on
+hostname.sh            on
+hwclock.sh             on
+hwclockfirst.sh        on
+ifupdown               0S
+ifupdown-clean         on
+killprocs              on
+module-init-tools      on
+mountall-bootclean.sh  on
+mountall.sh            on
+mountdevsubfs.sh       on
+mountkernfs.sh         on
+mountnfs-bootclean.sh  on
+mountnfs.sh            on
+mountoverflowtmp       on
+mtab.sh                on
+networking             0S
+ntp                    on
+procps                 on
+rc.local               on
+rcS                    off
+rmnologin              on
+rsyslog                on
+screen-cleanup         on
+sendsigs               0
+ssh                    on
+stop-bootlogd          on
+stop-bootlogd-single   on
+sudo                   on
+umountfs               0
+umountnfs.sh           0
+umountroot             0
+urandom                0S
+}}}
+
+== プロセス確認 ==
+
+{{{
+% sudo  /sbin/service --status-all 
+}}}
+
+※想定している動作をしないので後日確認予定
+
+
+== 開放ポートを確認 ==
+
+=== nmap導入 ===
+
+{{{
+sudo aptitude update
+sudo aptitude install nmap
+}}}
+
+=== ポート状況確認 ===
+
+{{{
+% whereis nmap
+nmap: /usr/bin/nmap /usr/lib/nmap /usr/share/nmap /usr/share/man/man1/nmap.1.gz
+}}}
+
+{{{
+% nmap localhost
+
+% /usr/bin/nmap localhost
+
+Starting Nmap 4.62 ( http://nmap.org ) at 2010-02-17 20:43 JST
+Interesting ports on localhost (127.0.0.1):
+Not shown: 1714 closed ports
+PORT   STATE SERVICE
+22/tcp open  ssh
+
+Nmap done: 1 IP address (1 host up) scanned in 0.067 seconds
+}}}
+
+現時点では外部からこのサーバにアクセスする出入り口は22番ポートのみということが確認できました。

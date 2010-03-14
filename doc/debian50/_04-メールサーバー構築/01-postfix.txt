@@ -1,0 +1,234 @@
+= Postifx =
+
+'''''当サイトではPostfixを使ったメールサーバー構築方法を紹介します。'''''
+
+== 確認 ==
+
+postfixを検索
+
+{{{
+% sudo aptitude search postfix
+p   postfix
+...
+}}}
+
+== インストール ==
+
+{{{
+% sudo aptitude update
+% sudo aptitude upgrade
+% sudo aptitude install postfix
+}}}
+
+ASCIIアートのような表現によるダイアログが表示されるので「Ctrl+l」でいくらか画面が再描画されるのでお試しください。
+
+後で変更できるので設定しないを選択。
+
+== ドキュメント確認 ==
+
+以下のコマンドを実行し、ドキュメントを読んでおいて下さい。
+
+{{{
+% man postfix
+}}}
+
+
+== 設定ファイルを確認 ==
+
+設定ファイルを修正します。設定ファイルの場所が分からない場合は先ほどの''man command''を実行します。
+
+{{{
+% man postfix
+}}}
+
+設定ファイルを確認するためにはpostconf -dを実行すれば分かるようです。
+
+{{{
+CONFIGURATION PARAMETERS
+       The following main.cf configuration parameters are exported as environment variables with the same names:
+
+       command_directory (see 'postconf -d' output)
+              The location of all postfix administrative commands.
+
+       daemon_directory (see 'postconf -d' output)
+              The directory with Postfix support programs and daemon programs.
+
+       config_directory (see 'postconf -d' output)
+              The default location of the Postfix main.cf and master.cf configuration files.
+
+}}}
+
+postconf -d を実行します。結果が沢山出力されるので''grep''を併用します。
+
+{{{
+% sudo postconf -d | grep config_directory
+config_directory = /etc/postfix
+}}}
+
+もし、分からない事があっても、あきらめずにmanコマンドを実行してください。
+
+== 設定ファイルを作成 ==
+
+postfixの設定ファイルは/etc/postfix/main.cfですが、install時に「設定しない」を選んだ場合、雛型となるmain.cfが存在していません。
+
+雛型をコピーします。
+
+{{{
+% sudo cp /usr/share/postfix/main.cf.dist /etc/postfix/main.cf
+}}}
+
+エディタで開く
+
+{{{
+% sudo vi /etc/postfix/main.cf
+}}}
+
+下記項目を修正
+
+{{{
+myhostname = mail.dev-01.fra	# FQDNの指定
+mydomain = dev-01.linode
+myorigin = $mydomain		
+inet_inerfaces = all
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain	# 自ドメイン宛メールを受信可能にする。
+
+
+### 信頼しているクライアントIPアドレスを指定
+mynetworks = 127.0.0.0/8
+relay_domains = $mydestination
+
+### メールボックス形式をMaildir形式にする
+home_mailbox = Maildir/
+
+### メールサーバーソフト名の隠蔽化
+smtpd_banner = $myhostname ESMTP unknown 
+}}}
+
+以下の項目を追記
+
+{{{
+### SMTP-Auth 
+smtpd_sasl_auth_enable = yes	
+smtpd_sasl_local_domain = $myhostname	
+smtpd_recipient_restrictions =
+    permit_mynetworks		
+    permit_sasl_authenticated	
+    reject_unauth_destination
+
+### 受信メールサイズ制限
+message_size_limit = 10485760	
+
+### アカウントが実在するかの問い合わせをさせない
+disable_vrfy_command = yes
+
+### 送信者のメールアドレスがDNSのA、MXレコードを持たない場合は拒否
+smtpd_sender_restrictions = reject_unknown_sender_domain
+}}}
+
+XXX とりあえずここまで
+
+== SMTP-Auth設定 ==
+
+=== インストール ===
+
+{{{
+sudo aptitude install sasl2-bin
+}}}
+
+START=NOをSTART=yesに変更します。
+
+{{{
+% sudo vi /etc/default/saslauthd
+}}}
+
+=== 起動 ===
+
+saslauthdを起動、chkconfigに追加
+
+{{{
+% sudo /sbin/service start
+% sudo /sbin/chkconfig saslauthd on
+% sudo /sbin/chkconfig --list saslauthd
+}}}
+
+既存ユーザー homepageのメールボックスを作成
+
+{{{
+% mkdir ~/Maildir
+% chmod 700 ~/Maildir
+}}}
+
+今後ユーザーを追加した場合は自動的にMaildirディレクトリを用意する
+{{{
+% sudo mkdir -p /etc/skel/Maildir/{new,cur,tmp}
+% sudo chmod -R 700 /etc/skel/Maildir/
+}}}
+
+== Procmailインストール ==
+
+{{{
+% sudo aptitude install procmail
+}}}
+
+Postfix設定ファイルの編集
+
+{{{
+% sudo vi /etc/postfix/main.cf
+}}}
+
+{{{
+mailbox_command = /usr/bin/procmail	#  Procmailと連携するようにする。
+}}}
+
+Procmail設定ファイルを記述
+
+{{{
+% sudo vi /etc/procmailrc
+}}}
+
+{{{
+SHELL=/bin/bash
+PATH=/usr/bin:/bin
+DROPPRIVES=yes
+MAILDIR=$HOME/Maildir
+DEFAULT=$MAILDIR/
+LOGFILE=$MAILDIR/.procmail.log # ログ出力先
+# VERBOSE=ON
+# 未承諾広告メール削除※システムの文字コードがUTF-8を想定
+0
+* ^Subject:.*iso-2022-jp
+* ^Subject:\/.*
+* ? echo "$MATCH" | nkf -mwZ2 | sed 's/[[:space:]]//g' | egrep '未承諾広告※'
+/dev/null
+}}}
+
+上記で出力するログをログローテーションに追加
+
+{{{
+% sudo vi /etc/logrotate.d/procmail
+}}}
+
+{{{
+/home/*/Maildir/.procmail.log {
+    missingok
+    nocreate
+    notifempty
+}
+
+}}}
+
+== Postfix起動 ==
+
+設定ファイルの内容をチェック
+
+{{{
+% sudo /sbin/service postfix restart
+% sudo /sbin/chkconfig postfix on
+}}}
+
+== ポート確認 ==
+
+{{{
+% sudo nmap localhost | grep smtp
+25/tcp  open  smtp
+}}}

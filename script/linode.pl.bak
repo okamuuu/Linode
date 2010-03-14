@@ -1,0 +1,107 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use utf8;
+use Perl6::Say;
+use Data::Dumper;
+use Data::Dump qw(dump);
+use Devel::Size qw(size total_size);
+use FindBin qw($Bin);
+use Path::Class qw/dir file/;
+use File::Slurp;
+use lib dir($Bin, '..', 'lib')->stringify;
+
+use Shaq::CMS;
+use Shaq::CMS::ArchiveParser::Trac;
+use Shaq::Unit::MT;
+use Shaq::UI::Navigation::Tab;
+use Shaq::UI::Bread;
+use Shaq::Unit::FTP;
+
+my %argv;
+use App::Options(
+    values => \%argv,
+    option => {
+        write  => "type=boolean",
+        upload => "type=boolean",
+    },
+);
+
+my $config = {
+    ftp => {
+        hostname => 'ftp25.chicappa.jp',
+        username => 'angry.jp-bi-zen-ko',
+        password => 'v6isjhm1',
+    }
+};
+
+my $doc_dir    = dir( $Bin, '..', 'doc' );
+my $root_dir   = dir( $Bin, '..', 'root' );
+my $backup_dir = dir( $Bin, '..', 'backup' );
+
+my $remote_root_dir   = dir( '/',  'linode_jp', 'root' );
+my $remote_backup_dir = dir( '/',  'linode_jp', 'backup' );
+
+my $parser = Shaq::CMS::ArchiveParser::Trac->new;
+my $cms    = Shaq::CMS->new(
+    name       => 'How to Linode',
+    doc_dir    => $doc_dir,
+    root_dir   => $root_dir,
+    backup_dir => $backup_dir,
+    parser     => $parser
+);
+
+my $mt = Shaq::Unit::MT->new;
+
+my $tab = Shaq::UI::Navigation::Tab->new;
+$tab->categories(
+    [
+        { dir => 'home',      name => 'HOME' },
+        { dir => 'centos53',  name => 'CentOS5.3' },
+        { dir => 'debian50',  name => 'Debian5.0' }
+    ]
+);
+
+
+$tab->base_url("..");
+
+if ( $argv{write} ) {
+
+    my $site = $cms->doc2site;
+
+    for my $page ( $site->pages ) {
+
+        my $bread = Shaq::UI::Bread->new;
+        $bread->add( { dir => $argv{cat} , name => $argv{cat}  } );
+        $bread->add( { dir => 'dummy' , name => $page->{archive}->title  } );
+
+        $tab->current( $argv{cat} );
+
+        my $xhtml = $mt->render_file(
+            'archive.mt',
+            {
+                tab     => $tab,
+                bread   => $bread,
+                page    => $page
+            }
+        );
+        
+        my $file =
+          file( $root_dir, $page->{archive}->basename . ".html" )->stringify;
+
+        File::Slurp::write_file( $file, $xhtml );
+    }
+
+    $cms->backup;
+    print "write and backup!!\n";
+}
+
+if ( $argv{upload} ) {
+
+    my $ftp = Shaq::Unit::FTP->new($config->{ftp});
+    $ftp->upload($root_dir,$remote_root_dir);
+    $ftp->upload($backup_dir,$remote_backup_dir);
+    print "upload!!\n";
+}
+
+

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf8" />
+    <title>Snort + Oinkmaster | How to Linode</title>
+    <meta name="keywords" content="" />
+    <meta name="description" content="不正アクセスを検知するためにSnortを導入します。またSnortが不正アクセスかどうかを判断するルールファイルの最新化を自動化する為、Oinkmasterを導入します。" />
+    <meta name="robots" content="all" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../common/css/import.css"/>
+</head>
+<body>
+	<div id="wrapper">
+		<div id="wrap">
+			<div id="header">
+				<p id="title"><a href="/">How to Linode</a></p>
+			</div>
+<!-- category[start] -->
+<ul id="tab">
+<li><a href="/" class="home">HOME</a></li>
+<li><a href="/centos53/" class="centos53 current">CentOS5.3</a></li>
+<li><a href="/debian50/" class="debian50">Debian5.0</a></li>
+</ul>
+<!-- category[end] -->
+
+<!-- bread[start] -->
+<p id="bread">
+<a href="/">home</a> &gt;
+Snort + Oinkmaster
+</p>
+<!-- bread[end] -->
+
+			<div id="side-bar">
+<!-- menu[start] -->
+<h3>初期設定</h3>
+<ul class="menu">
+    <li><a href="index.html">OS起動</a></li>
+    <li><a href="02-ssh.html">OpenSSH設定</a></li>
+    <li><a href="02-yum.html">yum最適化</a></li>
+    <li><a href="02-sudo.html">sudo導入</a></li>
+    <li><a href="02-vim.html">vi拡張</a></li>
+    <li><a href="02-screen.html">screen導入</a></li>
+    <li><a href="02-zsh.html">zsh導入</a></li>
+    <li><a href="02-ntpd.html">日付設定</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>Webサーバー構築</h3>
+<ul class="menu">
+    <li><a href="03-virtualhost.html">バーチャルホスト設定</a></li>
+    <li><a href="03-htdigest.html">認証ページ作成</a></li>
+    <li><a href="03-ssl.html">SSL通信</a></li>
+    <li><a href="03-fcgi.html">FCGI</a></li>
+    <li><a href="03-memcache.html">mamcache</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>メールサーバー構築</h3>
+<ul class="menu">
+    <li><a href="04-postfix.html">Postifx</a></li>
+    <li><a href="04-dovecot.html">dovecot</a></li>
+    <li><a href="04-mailx.html">mailコマンド導入</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>セキュリティ強化</h3>
+<ul class="menu">
+    <li><a href="05-tripwire.html">Tripwire</a></li>
+    <li><a href="05-chkrootkit.html">chkrootkit</a></li>
+    <li><a href="05-snort.html">Snort + Oinkmaster</a></li>
+    <li><a href="05-swatch.html">SWATCH</a></li>
+    <li><a href="05-clam.html">Clam AntiVirus</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>DBサーバー構築</h3>
+<ul class="menu">
+    <li><a href="06-mysql.html">MySQL導入</a></li>
+    <li><a href="06-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>開発者向けツール導入</h3>
+<ul class="menu">
+    <li><a href="07-subversion.html">subversion</a></li>
+    <li><a href="07-trac.html">Trac</a></li>
+    <li><a href="07-hotcopy_svn_trac.html">Trac & SVN バックアップ</a></li>
+    <li><a href="07-git.html">git</a></li>
+</ul>
+<!-- menu[end] -->
+
+<!-- menu[start] -->
+<h3>バックアップ強化</h3>
+<ul class="menu">
+    <li><a href="08-backup.html">自動バックアップ</a></li>
+    <li><a href="08-subversion.html">MySQL導入</a></li>
+    <li><a href="08-cwRsync.html">rsyncクライアント導入</a></li>
+    <li><a href="08-mysql_backup.html">MySQLバックアップ</a></li>
+</ul>
+<!-- menu[end] -->
+
+			</div>
+		    <div id="content">
+		        <h1 id="Snort+Oinkmaster">Snort + Oinkmaster</h1>
+<p id="description">不正アクセスを検知するためにSnortを導入します。またSnortが不正アクセスかどうかを判断するルールファイルの最新化を自動化する為、Oinkmasterを導入します。</p>
+<h2 id="インストール">インストール</h2>
+<p>
+最初に必要なパッケージをインストールします。
+</p>
+<pre class="wiki">
+% sudo yum -y install libcap-devel libpcap
+</pre>
+<p>
+snortがyum レポジトリに存在していないか確認します。
+</p>
+<pre class="wiki">
+% sudo yum list | grep snort
+</pre>
+<p>
+rpmforge,epelを参照して探します。残念ながら見つかりません。
+</p>
+<pre class="wiki">
+% sudo yum --enablerepo=rpmforge list | grep snort
+% sudo yum --enablerepo=epel list | grep snort
+</pre>
+<p>
+snortバイナリ版をダウンロードしてインストールします。
+最新URLは[ダウンロードページ http://www.snort.org/downloads]で確認してください。
+</p>
+<pre class="wiki">
+% cd /usr/local/src/
+% sudo wget http://dl.snort.org/snort-current/snort-2.8.5.1-1.RH5.i386.rpm
+</pre>
+<p>
+インストール
+</p>
+<pre class="wiki">
+% sudo rpm -Uvh snort-2.8.5.1-1.RH5.i386.rpm
+</pre>
+<h2 id="設定ファイルを修正">設定ファイルを修正</h2>
+<p>
+設定ファイルを修正
+</p>
+<pre class="wiki">
+% sudo vi /etc/snort/snort.conf
+</pre>
+<pre class="wiki">
+var HOME_NET 74.20X.XXX.XXX # 契約しているLinodeのIPアドレス
+var EXTERNAL_NET !$HOME_NET
+</pre>
+<h2 id="Snortルールファイルの導入">Snortルールファイルの導入</h2>
+<p>
+snortのアカウントを作成
+</p>
+<p>
+<a class="ext-link" href="http://snort.org"><span class="icon"></span>snort.org</a>
+</p>
+<p>
+ダウンロードしたファイルを解凍し、ルールを設定されている配置へ移動する。
+</p>
+<pre class="wiki">
+% cd /usr/local/src
+% sudo tar zxvf snortrules-snapshot-CURRENT.tar.gz
+% sudo cp -r rules/* /etc/snort/rules/
+% sudo rm -rf doc/ rules/ so_rules/ etc/
+% sudo rm -f snortrules-snapshot-CURRENT.tar.gz
+</pre>
+<p>
+起動および自動起動設定。確認。
+</p>
+<pre class="wiki">
+% sudo /etc/rc.d/init.d/snortd start
+% sudo /sbin/chkconfig snortd on
+% sudo /sbin/chkconfig --list snortd
+snortd          0:off   1:off   2:on    3:on    4:on    5:on    6:off
+</pre>
+<h2 id="ルールファイルの自動更新">ルールファイルの自動更新</h2>
+<pre class="wiki">
+% cd /usr/local/src
+% sudo wget http://sourceforge.net/projects/oinkmaster/files/oinkmaster/2.0/oinkmaster-2.0.tar.gz/download
+% sudo tar zxvf oinkmaster-2.0.tar.gz
+% sudo cp oinkmaster-2.0/oinkmaster.pl /usr/local/bin/
+% sudo cp oinkmaster-2.0/oinkmaster.conf /etc/
+% sudo cp oinkmaster-2.0/oinkmaster.1 /usr/share/man/man1/
+% sudo rm -rf oinkmaster-2.0/
+% sudo rm -f oinkmaster-2.0.tar.gz
+</pre>
+<p>
+設定
+</p>
+<pre class="wiki">
+% sudo vi /etc/oinkmaster.conf
+</pre>
+<pre class="wiki">
+url = http://www.snort.org/pub-bin/oinkmaster.cgi/[Oink Code貼り付け]/snortrules-snapshot-2.8.tar.gz	←追加
+url = http://www.snort.org/pub-bin/downloads.cgi/Download/comm_rules/Community-Rules.tar.gz		←追加
+</pre>
+<p>
+テスト
+</p>
+<pre class="wiki">
+% sudo /usr/local/bin/oinkmaster.pl -o /etc/snort/rules/
+</pre>
+<h2 id="snort-rep導入">snort-rep導入</h2>
+<p>
+rpmforgeを参照してyumインストール
+</p>
+<pre class="wiki">
+% sudo yum --enablerepo=rpmforge -y install snort-rep
+</pre>
+<p>
+自動化するためにスクリプトを準備
+</p>
+<pre class="wiki">
+% sudo vi /root/snort-rep.sh
+</pre>
+<pre class="wiki">
+#!/bin/bash
+PATH=/usr/bin:/bin
+snort-rep -r --source=fast:/var/log/snort/alert | mail -s &quot;snort alert&quot; root
+</pre>
+<p>
+実行権限を付与
+</p>
+<pre class="wiki">
+% sudo chmod 0700 /root/snort-rep.sh
+</pre>
+<p>
+定期実行
+</p>
+<pre class="wiki">
+% sudo vi /etc/crontab
+</pre>
+<pre class="wiki">
+20 3 * * * root /root/snort-rep.sh
+</pre>
+<h2 id="確認">確認</h2>
+<p>
+Pingを検知するかどうかを試します。
+</p>
+<pre class="wiki">
+% sudo vi /etc/snort/snort.conf
+</pre>
+<p>
+行頭のコメントをはずしてpingを検知するように設定します。
+</p>
+<pre class="wiki">
+include $RULE_PATH/icmp-info.rules
+</pre>
+<p>
+再起動
+</p>
+<pre class="wiki">
+% sudo /sbin/service snortd restart
+</pre>
+<p>
+ログ監視
+</p>
+<pre class="wiki">
+% sudo tail -f /var/log/snort/alert
+</pre>
+<p>
+この状態でpingを打つとログが出現すると思います。
+</p>
+
+		    </div>
+			<br class="clear" />
+			<div id="footer">
+				<p>
+					<a href="http://linode.jp">Linode</a> | 
+					<a href="http://www.add9.biz/phpunit">PHPUnit</a> | 
+					<a href="http://www.add9.biz/symfony">Symfony</a>
+					<br />
+				
+					<a href="http://www.add9.biz/c">C</a> | 
+					<a href="http://www.add9.biz/moose">Moose</a> | 
+					<a href="http://www.add9.biz/design_pattern">Design Pattern</a>
+					<br />
+
+					<a href="http://www.add9.biz/jump">Jump Attack Forum</a> | 
+					<a href="http://dancepod.tv">DancePod.tv</a>
+				</p>
+			</div>
+	    </div>
+		<div id="adsence">
+			<script type="text/javascript"><!--
+			google_ad_client = "pub-3627018862025650";
+			google_ad_slot = "0294735282";
+			google_ad_width = 160;
+			google_ad_height = 600;
+			//-->
+			</script>
+			<script type="text/javascript"
+			src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+			</script>
+		</div>
+	</div>
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-7965172-1");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+</body>
+</html>
