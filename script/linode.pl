@@ -44,7 +44,7 @@ if ( $argv{write} ) {
 
             my $bread = Shaq::Model::Bread->new;
             
-            if ( $category->dirname eq 'home' ) {
+            if ( $category->dirname ne 'home' ) {
                 $bread->add( { dir => $category->dirname , name => $category->dirname  } );
             }
             
