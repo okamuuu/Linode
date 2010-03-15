@@ -62,3 +62,6 @@ C:\Windows\System32\drivers\etc\host
 }}}
 
 IPアドレスは各自で適宜置き換えて下さい。
+
+firebirdやBecky!!など、自身でご利用されているメールソフトを使って送信テストをしてみてください。
+

@@ -1,0 +1,60 @@
+= Dovecot =
+
+'''''Dovecotは安全性の高さが特徴で動作が軽快であり、SQLサーバーやLDAPサーバーとの連携にも対応しています'''''
+
+== Dovecotインストール ==
+
+imap, pop3両方に対応します。
+
+{{{
+% sudo aptitude -y install dovecot-imapd
+% sudo aptitude -y install dovecot-pop3d
+}}}
+
+== 設定 ==
+
+設定ファイルを編集します。
+
+{{{
+% sudo vi /etc/dovecot/dovecot.conf
+}}}
+
+imaps, pop3sにのみ対応させます。
+
+{{{
+protocols = imaps pop3s
+mail_location = maildir:~/Maildir	# メールボックス形式をMaildirに
+}}}
+
+== 起動 ==
+
+{{{
+% sudo /sbin/service dovecot start
+}}}
+
+サーバー起動時に自動的にdovecotも立ち上がる事を確認
+
+{{{
+% sudo /sbin/chkconfig --list dovecot
+dovecot                   0:off  1:off  2:on   3:on   4:on   5:on   6:off
+}}}
+
+== 管理者宛へのメールを一般ユーザーへ ==
+
+aliasファイルを変更し、root宛のメールをhomepageユーザーへ転送します。
+
+{{{
+% sudo vi /etc/aliases
+}}}
+
+以下を最終行に追記します。
+
+{{{
+root:	admin
+}}}
+
+変更を反映
+
+{{{
+sudo newaliases
+}}}

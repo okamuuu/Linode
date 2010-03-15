@@ -66,8 +66,8 @@ manコマンドの使い方は後で書く
 ### FQDNの指定
 ### ドメイン名
 ### 自ドメイン宛メールを受信可能にする。
-myhostname = mail.dev-01.ca
-mydomain = dev-01.ca
+myhostname = mail.dev01.ca
+mydomain = dev01.ca
 mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
 
 ### メール送信時に補完するドメイン名

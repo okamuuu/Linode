@@ -1,0 +1,15 @@
+= mailコマンド導入 =
+
+'''''mailxを使ってメール送信できると管理スクリプトの作成が楽になります。'''''
+
+== パッケージの確認 ==
+
+{{{
+% sudo aptitude search mailx
+}}}
+
+導入
+
+{{{
+sudo aptitude -y install mailx
+}}}
