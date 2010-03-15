@@ -1,0 +1,147 @@
+= SASL =
+
+'''''Postfixは導入しましたがセキュリティが不十分です。[[BR]]SMTP認証のためにsaslauthdを利用します。'''''
+
+== SASLの導入 == 
+
+''saslauthd''を利用するために必要なパッケージを導入します。
+
+|| libsasl2-modules || 認証方式を利用するためのライブラリ  ||
+|| sasl2-bin        || saslauthd                           ||
+
+
+{{{
+% sudo aptitude -y install libsasl2-modules sasl2-bin
+}}}
+
+saslauthdを設定するため、dpkg-statoverrideコマンドを実行します。
+
+saslauthd用で使用するファイル(ソケット)をディレクトリに配置するのですが、その際にそのディレクトリに対して所有者、グループおよびパーミッションを指定しています。
+
+{{{
+% sudo /usr/sbin/dpkg-statoverride --add root sasl 710 /var/spool/postfix/var/run/saslauthd
+}}}
+
+※man dpkg-statoverride によると、インストールする際にファイルを異なるグループ、所有者に変更する事ができるようです。
+
+※ちなみに上述のファイル(ソケット)を介してPostfixとsaslauthdは通信を行います。
+
+postfixユーザーをsaslグループに追加します。
+
+{{{
+% sudo /usr/sbin/adduser postfix sasl
+}}}
+
+saslauthdデーモンの設定ファイルを編集します。編集する箇所は次の場所です。
+
+OPTIONS項目に「-m dir」という形式でディレクトリ(Postfixとsaslauthdが通信を行うディレクトリ)のパスを指定します。
+
+{{{
+% sudo vi /etc/default/saslauthd
+}}}
+
+{{{
+OPTIONS="-c -m /var/spool/postfix/var/run/saslauthd"
+}}}
+
+saslauthdを再起動
+
+{{{
+% sudo /sbin/service saslauthd restart
+}}}
+
+== Postfixの設定 ==
+
+ポート毎の設定を行う場合、main.cfではなくmaster.cfを編集します。
+
+{{{
+% sudo vi /etc/postfix/master.cf
+}}}
+
+{{{
+### 465(コメントアウトをはずす)
+### tlsの項目はコメントアウトしたまま
+### SMTP認証の有効化(コメントアウトをはずす)
+### クライアントの接続制限(コメントアウトをはずす)
+### RCPT TOコマンドの発行制限(追加)
+smtps inet n - - - - smptd
+#  -o smtpd_tls_wrappermode=yes
+  -o smtpd_sasl_auth_enable=yes
+  -o smptd_client_restrictions=permit_sasl_authenticated, reject
+  -o smptd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination
+}}}
+
+smtpd.confファイルを作成
+
+{{{
+% sudo vi /etc/postfix/sasl/smptd.conf
+}}}
+
+{{{
+pwcheck_method: saslauthd
+mech_list: plain login
+}}}
+
+再起動
+
+{{{
+% sudo /sbin/service postfix restart
+}}}
+
+確認
+
+{{{
+% nmap localhost
+
+Starting Nmap 4.62 ( http://nmap.org ) at 2010-03-14 21:29 JST
+Interesting ports on localhost (127.0.0.1):
+Not shown: 1712 closed ports
+PORT    STATE SERVICE
+22/tcp  open  ssh
+25/tcp  open  smtp
+465/tcp open  smtps
+}}}
+
+== 動作確認 ==
+
+ユーザー名、パスワードは各自で置き換えて下さい。
+
+{{{
+% perl -MMIME::Base64 -e 'print encode_base64("username");' ### ①ユーザー名
+% perl -MMIME::Base64 -e 'print encode_base64("password");' ### ②パスワード
+}}}
+
+{{{
+% telnet localhost 465
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+220 mail.dev-01.ca ESMTP unknown
+EHLO localhost	← SMTPの通信を始める
+250-mail.dev-01.ca
+250-PIPELINING
+250-SIZE 10240000
+250-VRFY
+250-ETRN
+250-AUTH PLAIN LOGIN
+250-ENHANCEDSTATUSCODES
+250-8BITMIME
+250 DSN
+AUTH LOGIN		← SMTP認証を始める
+334 VXNlcm5hbWU6
+????????????	← ユーザー名を入力
+334 UGFzc3dvcmQ6
+????????????	← パスワードを入力
+235 2.7.0 Authentication successful
+QUIT			← SMTP通信を終了する。
+221 2.0.0 Bye
+Connection closed by foreign host.
+}}}
+
+== Postfixを停止 ==
+
+まだセキュリティが万全とは言えない状況なのでpostfixを停止しておきます。
+
+{{{
+% sudo /sbin/service postfix stop
+}}}

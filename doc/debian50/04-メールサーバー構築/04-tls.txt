@@ -1,0 +1,64 @@
+= TLS =
+
+'''''saslauthdで使用しているパスワードが平文でネットワーク上を流れているのでこれを暗号化します。'''''
+
+== 鍵と証明書について ==
+
+''Postfix''がTLSを使って通信するには、TLS用の''秘密鍵''と''証明書''が必要です。これらはベリサインといった商用の認証局から発行されたものを利用しますがlennyではデフォルトの証明書と鍵が存在しているのでこれを使います。
+
+目的は''証明''ではなく暗号化です。
+
+== Postfixの設定 ==
+
+465番ポートを使うだけではTLS経由の通信になるわけではありません。そのため明示的にクライアントが465番ポートに接続すると必ず暗号化されるように設定します。
+
+master.cfを編集
+
+{{{
+% sudo vi /etc/postfix/master.cf
+}}}
+
+{{{
+smtps     inet  n       -       -       -       -       smtpd
+  -o smtpd_tls_wrappermode=yes	# <= TLSの使用をデフォルトにする
+  -o smtpd_sasl_auth_enable=yes
+  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+  -o smptd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination
+}}}
+
+main.cfに追記
+
+{{{
+% sudo vi /etc/postfix/main.cf
+}}}
+
+{{{
+### TLS
+smtpd_tls_cert_file              = /etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file               = /etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_use_tls                    = yes
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtp_tls_session_cache_database  = btree:${data_directory}/smtp_scache
+}}}
+
+再起動
+
+{{{
+% sudo /sbin/service postfix restart
+}}}
+
+== 動作確認 ==
+
+Windowsマシンからdev01.caへアクセスします。といってもこのドメインは勝手に自分がつけている名前であってインターネットの世界では全くこの住所は通じません。
+
+ひとまず自分のマシンでは通じるようにします。次のファイルを開いて追記します。
+
+{{{
+C:\Windows\System32\drivers\etc\host
+}}}
+
+{{{
+74.207.xxx.xxx dev01.ca
+}}}
+
+IPアドレスは各自で適宜置き換えて下さい。
