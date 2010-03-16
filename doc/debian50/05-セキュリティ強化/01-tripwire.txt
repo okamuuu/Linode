@@ -1,0 +1,275 @@
+= Tripwire =
+
+'''''ファイルの改竄を検出するためにTripwireを導入します。導入時のファイル状態をデータベース化し、そのデータベースとファイルの現状を比較することにより、ファイルの追加・変更・削除をチェックします。'''''
+
+== 導入する理由 ==
+
+''Tripwire''はシステムファイルやディレクトリに対する変更をすべて検出し、管理者に報告するツールです。
+
+悪質なプログラムをインストールしたり、設定ファイルを書き換えるクラッカーと呼ばれる人々に不正操作された場合、Tripwireを導入している事によって、書き換えられたファイルを全て検出することができる非常に強力なツールです。
+
+debianには''integrit''もありますが、当サイトではtripwireを紹介します。これは管理人の習慣に依存しているためでtripwireのほうが優れている、という意味ではありません。
+
+== インストール ==
+
+{{{
+% sudo aptitude update
+% sudo aptitude upgrade
+}}}
+
+{{{
+% sudo aptitude search tripwire
+p   tripwire    - ファイルとディレクトリの完全性チェッカー
+}}}
+
+インストールします。この時点でサイトパスフレーズ、ローカルパスフレーズなどを作成しています。
+
+{{{
+% sudo aptitude -y install tripwire
+}}}
+
+== Tripwire設定 ==
+
+デフォルトの設定ファイルが存在していますが、内容を少し変更します。
+
+変更した結果を反映するにはプレーンテキスト版を設定ファイルを編集したあと''twadmin''コマンドなどを
+使ってバイナリ版の設定ファイルを生成します。
+
+=== Tripwire設定ファイル(プレーンテキスト版) ===
+
+対象ファイルを開きます
+
+{{{
+% sudo vi /etc/tripwire/twcfg.txt
+}}}
+
+以下を修正します。
+
+{{{
+LOOSEDIRECTORYCHECKING = yes			# ディレクトリ・ファイルの追加削除をレポート
+MAILNOVIOLATIONS = false				# ファイル変更検知時にメールする
+EMAILREPORTLEVEL = 4
+REPORTLEVEL = 4
+}}}
+
+=== Tripwire設定ファイル(電子署名版) ===
+
+暗号化された設定ファイルを作成します。
+
+{{{
+% sudo twadmin --create-cfgfile -S /etc/tripwire/site.key /etc/tripwire/twcfg.txt 
+Please enter your site passphrase: []	←空エンター※パスワードを設定したほうがよい
+Wrote configuration file: /etc/tripwire/tw.cfg
+
+}}}
+
+暗号化された設定ファイルが生成されます。
+
+{{{
+/etc/tripwire/tw.cfg
+}}}
+
+この暗号化された設定ファイルからプレーンテキスト版のファイルを復元できるので、プレーンテキスト版を削除します。
+
+{{{
+% sudo rm -f /etc/tripwire/twcfg.txt
+}}}
+
+なお、復元方法は次のとおりです。
+
+{{{
+% sudo twadmin -m f -c /etc/tripwire/tw.cfg > /etc/tripwire/twcfg.txt
+}}}
+
+== ポリシーファイルを作成 ==
+
+デフォルトのポリシーファイルと実際のファイル構成に差異があるのでこれを修正します。手作業で行っても可能ですが、手間がかかるのでPerlスクリプトで処理します。
+
+なお、このスクリプトは下記サイトから流用しています。作者はHiroaki Izumiさんです。
+
+[http://centossrv.com/tripwire.shtml CentOSで自宅サーバー構築]
+
+=== 修正スクリプト ===
+
+対象ファイルを作成
+
+{{{
+% sudo vi /etc/tripwire/twpolmake.pl
+}}}
+
+下記内容を記述
+
+{{{
+#!/usr/bin/perl
+# Tripwire Policy File customize tool
+# ----------------------------------------------------------------
+# Copyright (C) 2003 Hiroaki Izumi
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# ----------------------------------------------------------------
+# Usage:
+#    perl twpolmake.pl {Pol file}
+# ----------------------------------------------------------------
+$POLFILE=$ARGV[0];
+
+open(POL,"$POLFILE") or die "open error: $POLFILE" ;
+my($myhost,$thost) ;
+my($sharp,$tpath,$cond) ;
+my($INRULE) = 0 ;
+while (<POL>) {
+    chomp;
+    if (($thost) = /^HOSTNAME\s*=\s*(.*)\s*;/) {
+        $myhost = `hostname` ; chomp($myhost) ;
+        if ($thost ne $myhost) {
+            $_="HOSTNAME=\"$myhost\";" ;
+        }
+    }
+    elsif ( /^{/ ) {
+        $INRULE=1 ;
+    }
+    elsif ( /^}/ ) {
+        $INRULE=0 ;
+    }
+    elsif ($INRULE == 1 and ($sharp,$tpath,$cond) = /^(\s*\#?\s*)(\/\S+)\b(\s+->\s+.+)$/) {
+        $ret = ($sharp =~ s/\#//g) ;
+        if ($tpath eq '/sbin/e2fsadm' ) {
+            $cond =~ s/;\s+(tune2fs.*)$/; \#$1/ ;
+        }
+        if (! -s $tpath) {
+            $_ = "$sharp#$tpath$cond" if ($ret == 0) ;
+        }
+        else {
+            $_ = "$sharp$tpath$cond" ;
+        }
+    }
+    print "$_\n" ;
+}
+close(POL) ;
+}}}
+
+実行権を付与
+
+{{{
+% sudo chmod 700 /etc/tripwire/twpolmake.pl
+}}}
+
+=== ポリシーファイル最適化 ===
+
+暗号化されたポリシーファイルから、最適化されたポリシーファイルを作成します。
+
+{{{
+% sudo su
+# perl /etc/tripwire/twpolmake.pl /etc/tripwire/twpol.txt > /etc/tripwire/twpol.txt.new
+# exit
+}}}
+
+=== 最適化済みのポリシーファイル(暗号署名版)作成 ===
+
+{{{
+% sudo twadmin -m P -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key /etc/tripwire/twpol.txt.new
+Please enter your site passphrase: []	←空エンター※パスいれたほうが良い
+Wrote policy file: /etc/tripwire/tw.pol
+}}}
+
+=== 最適化済みのポリシーファイル(プレーンテキスト版)を削除 ===
+
+{{{
+% sudo rm -f '/etc/tripwire/twpol.txt.*'
+}}}
+
+=== ポリシーファイルを復元する場合 ===
+
+{{{
+% sudo twadmin -m p -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key > /etc/tripwire/twpol.txt
+}}}
+
+== データベース作成 ==
+
+{{{
+% sudo tripwire -m i -s -c /etc/tripwire/tw.cfg
+}}}
+
+ローカルパスフレーズを入力します。結構時間がかかります。
+
+== Tripwire確認 ==
+
+実行してみる。エラーが表示されない事を確認。
+
+{{{
+% sudo /usr/sbin/tripwire -m c -s -c /etc/tripwire/tw.cfg
+}}}
+
+試しにテストファイルを作成する
+
+{{{
+% sudo su
+# echo test > /root/test.txt
+# exit
+}}}
+
+再度実行して、ファイルが追加された事を検知していることを確認します。
+
+{{{
+% sudo /usr/sbin/tripwire -m c -s -c /etc/tripwire/tw.cfg
+}}}
+
+テストファイルを削除しておきます。
+
+{{{
+% sudo rm -f /root/test.txt
+}}}
+
+== シェルスクリプト作成および自動化 ==
+
+シェルスクリプトを作成します。
+
+{{{
+% sudo vi /root/tripwire.sh
+}}}
+
+次の内容を記述します。
+
+{{{
+#!/bin/bash
+PATH=/usr/sbin:/usr/bin:/bin:/usr/local/tripwire/sbin
+
+# パスフレーズ設定
+LOCALPASS=xxxxxxxx # ローカルパスフレーズ
+SITEPASS=xxxxxxxx  # サイトパスフレーズ
+cd /etc/tripwire
+
+# Tripwireチェック実行
+tripwire -m c -s -c tw.cfg|mail -s "Tripwire(R) Integrity Check Report in `hostname`" root
+
+# ポリシーファイル最新化
+twadmin -m p -c tw.cfg -p tw.pol -S site.key > twpol.txt
+perl twpolmake.pl twpol.txt > twpol.txt.new
+#twadmin -m P -c tw.cfg -p tw.pol -S site.key -Q $SITEPASS twpol.txt.new > /dev/null
+#twadmin -m P -c tw.cfg -p tw.pol -S site.key twpol.txt.new > /dev/null
+rm -f twpol.txt* *.bak
+
+# データベース最新化
+rm -f /usr/local/tripwire/lib/tripwire/*.twd*
+tripwire -m i -s -c tw.cfg -P $LOCALPASS
+}}}
+
+実行権限を与えます。
+
+{{{
+% sudo chmod 700 /root/tripwire.sh
+}}}
+
+/etc/crontabにTripwire定期自動実行設定追加
+
+{{{
+00 3 * * * root /root/tripwire.sh
+}}}
