@@ -4,33 +4,16 @@
 
 == インストール ==
 
-yum でインストールができるかどうかを確認します。
 
 {{{
-% sudo yum list | grep chkrootkit
+% sudo aptitude update
+% sudo aptitude upgrade
+% sudo aptitude search chkrootkit
+p   chkrootkit - ルートキット検知ツール
 }}}
 
-発見できないのでrpmforgeから探します。
-
 {{{
-% sudo yum --enablerepo=rpmforge list | grep chkrootkit
-chkrootkit.i386                            0.47-1.el5.rf               rpmforge
-}}}
-
-chkrootkitに必要なパッケージを事前にインストールします。
-
-{{{
-% sudo yum -y install usermode
-}}}
-
-※rpmforgeのchkrootkitはconsolehelperというコマンドを使用します。
-このコマンドは''usermode''パッケージに含まれているのですが、2009年9月の時点では
-yumの依存関係に明記されていないようです。
-
-chkrootkit本体をインストール
-
-{{{
-% sudo yum --enablerepo=rpmforge -y install chkrootkit
+% sudo aptitude search chkrootkit
 }}}
 
 実行結果にINFECTEDが含まれる行が無い事を確認します。
@@ -59,13 +42,14 @@ SMTPSのbindshell誤検知対応のためにlsofコマンドが使用されて�
 確認
 
 {{{
-% sudo rpm -qa lsof
+% sudo aptitude search lsof
+p   lsof - 開いているファイルの一覧化
 }}}
 
-導入されていない場合はインストール
+インストール
 
 {{{
-% sudo yum -y install lsof
+sudo aptitude -y install lsof
 }}}
 
 === シェルスクリプトを作成 ===
@@ -79,8 +63,8 @@ SMTPSのbindshell誤検知対応のためにlsofコマンドが使用されて�
 以下を記述
 
 {{{
-#!/bin/bash
-PATH=/usr/bin:/bin
+#!/bin/zsh
+PATH=/usr/bin:/bin:/usr/sbin:
 TMPLOG=`mktemp`
 
 ### chkrootkit実行
@@ -91,7 +75,7 @@ cat $TMPLOG | logger -t chkrootkit
 
 ### SMTPSのbindshell誤検知対応
 if [ ! -z "$(grep 465 $TMPLOG)" ] && \
-   [ -z $(/usr/sbin/lsof -i:465|grep bindshell) ]; then
+   [ -z $( lsof -i:465|grep bindshell) ]; then
         sed -i '/465/d' $TMPLOG
 fi
 
@@ -112,4 +96,12 @@ cronに登録
 {{{
 % sudo vi /etc/crontab
 10 3 * * * root /root/chkrootkit.sh
+}}}
+
+== 確認 ==
+
+rootkitを検出しない限りはメールがこないのですが念のためエラーがないか実行しておくとよいでしょう
+
+{{{
+% sudo /root/chkrootkit.sh
 }}}

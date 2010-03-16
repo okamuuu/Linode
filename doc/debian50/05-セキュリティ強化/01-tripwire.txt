@@ -239,7 +239,7 @@ Wrote policy file: /etc/tripwire/tw.pol
 次の内容を記述します。
 
 {{{
-#!/bin/bash
+#!/bin/zsh
 PATH=/usr/sbin:/usr/bin:/bin:/usr/local/tripwire/sbin
 
 # パスフレーズ設定
