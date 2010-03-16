@@ -58,14 +58,14 @@ SSHD: All .example.ne.jp
 == HOSTNAMEの設定 ==
 
 HOSTNAMEは通常自分の好きな名前をつけるものなので各自で自由に設定してみてください。
-ここでは''DEV-01''と名付けました。
+ここでは''dev01''と名付けました。
 
 {{{
-# echo "DEV-01" > /etc/HOSTNAME
+# echo "dev01" > /etc/HOSTNAME
 # hostname -F /etc/HOSTNAME
 }}}
 
-DEV-01というhostnameはローカルルールなのでどのIPアドレスの事を指しているかを
+dev01というhostnameはローカルルールなのでどのIPアドレスの事を指しているかを
 /etc/hostsで指定しておく。
 
 {{{
