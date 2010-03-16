@@ -4,19 +4,49 @@
 
 == インストール ==
 
-RPMforgeリポジトリを参照してyumインストール
-
 {{{
-% sudo yum -y --enablerepo=rpmforge install swatch
+% sudo aptitude update
+% sudo aptitude upgrade
+% sudo aptitude search swatch
+p   swatch - 正規表現マッチング、構文強調やフック機能を持つログファイルビュ
 }}}
 
-== 設定 ==
+{{{
+% sudo aptitude -y install swatch
+}}}
 
-=== SWATCHアクションスクリプト作成 ===
+== SWATCH設定 ==
+
+SWATCH設定ファイル格納ディレクトリ作成
+
+{{{
+% sudo mkdir /etc/swatch
+}}}
+
+SWATCHログ切替え設定ファイル作成
+
+{{{
+% sudo vi /etc/logrotate.d/swatch
+}}}
+
+下記内容を記述
+
+{{{
+/var/log/swatch/swatch.log {
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        /etc/init.d/swatch restart > /dev/null || true
+    endscript
+}
+}}}
+
+=== SWATCH起動スクリプト作成 ===
 
 SWATCHが検知したIPアドレスからの累積不正アクセス数が3回以上になった場合または、引数でlock※と指定された場合、該当IPアドレスからのアクセスを24時間規制するシェルスクリプトを作成します。
 
-アクションスクリプトを作成
+== 起動スクリプトを作成 ==
 
 {{{
 % sudo vi /root/swatch_action.sh
@@ -25,7 +55,7 @@ SWATCHが検知したIPアドレスからの累積不正アクセス数が3回�
 下記内容を記述
 
 {{{
-#!/bin/bash
+#!/bin/zsh
 PATH=/bin:/sbin:/usr/bin
 LANG=C
 
@@ -94,34 +124,8 @@ fi
 % sudo chmod 700 /root/swatch_action.sh
 }}}
 
-== SWATCH設定 ==
 
-SWATCH設定ファイル格納ディレクトリ作成
-
-{{{
-% sudo mkdir /etc/swatch
-}}}
-
-SWATCHログ切替え設定ファイル作成
-
-{{{
-% sudo vi /etc/logrotate.d/swatch
-}}}
-
-下記内容を記述
-
-{{{
-/var/log/swatch/swatch.log {
-    missingok
-    notifempty
-    sharedscripts
-    postrotate
-        /etc/rc.d/init.d/swatch restart > /dev/null || true
-    endscript
-}
-}}}
-
-=== /var/log/secure監視設定 ===
+== /var/log/secure監視設定 ==
 
 以下のメッセージを検知したら該当ホストからのアクセスを24時間規制するようにする
 
@@ -144,7 +148,7 @@ Jan 28 19:32:10 centos sshd[16367]: Invalid user admin from XXX.XXX.XXX.XXXOct 2
 下記内容を記述します。
 
 {{{
-# logfile /var/log/secure
+# logfile /var/log/auth.log
 # アクセス無許可ホストからのSSHログイン失敗を検知したら該当ホストからのアクセスを24時間規制
 # ※/etc/hosts.deny、/etc/hosts.allowでアクセス許可ホストを制限していることが前提
 watchfor /sshd.*refused/
@@ -161,113 +165,116 @@ watchfor /sshd.*Invalid user/
 起動スクリプトを作成
 
 {{{
-% sudo vi /etc/rc.d/init.d/swatch
+% sudo vi /etc/init.d/swatch
 }}}
 
-下記内容を記述
+下記内容を記述。この起動スクリプトは下記サイトから拝借しています。
+
+http://ore.saizensen.net/archives/356
 
 {{{
-#!/bin/bash
-#
-# swatch
-#
-# chkconfig: 2345 90 35
-# description: swatch start/stop script
-# Source function library.
-. /etc/rc.d/init.d/functions
+#!/bin/zsh
 
-PATH=/sbin:/usr/local/bin:/bin:/usr/bin
-mkdir -p /var/log/swatch
+PATH="/sbin:/bin:/usr/sbin:/usr/bin"
+NAME="swatch"
+DAEMON="/usr/bin/swatch"
+DESC="simple watcher"
+CONFFILE="/etc/swatch/secure.conf"
+#LOGFILE="/var/log/secure"
+LOGFILE="/var/log/auth.log"
+PIDFILE="/var/run/swatch.pid"
+SCRIPTDIR="/var/log/swatch"
+OPTS="--config-file $CONFFILE --tail-file $LOGFILE --pid-file=$PIDFILE \
+	--script-dir=$SCRIPTDIR --awk-field-syntax --daemon"
+
+test -x $DAEMON || exit 0
+
 start() {
-    # Start daemons.
-    ls /var/run/swatch_*.pid > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        echo -n "Starting swatch"
-        pno=0
-        for conf in /etc/swatch/*.conf
-        do
-            pno=`expr $pno + 1`
-            WATCHLOG=`grep "^# logfile" $conf | awk '{ print $3 }'`
-            swatch --config-file $conf --tail-file $WATCHLOG \
-            --script-dir=/tmp --awk-field-syntax --use-cpan-file-tail --daemon \
-            --pid-file /var/run/swatch_$pno.pid \
-            >> /var/log/swatch/swatch.log 2>&1
-            RETVAL=$?
-            [ $RETVAL != 0 ] && return $RETVAL
-        done
-        echo
-        [ $RETVAL = 0 ] && touch /var/lock/subsys/swatch
-        return $RETVAL
+    if [ ! -f "$CONFFILE" ]; then
+        echo "Error: $CONFFILE does not exist."
+        exit 1
+    fi
+    if [ ! -f "$LOGFILE" ]; then
+        echo "Error: $LOGFILE does not exist."
+        exit 1
+    fi
+    if [ -f "$PIDFILE" ]
+    then
+        echo "Error: $NAME is already running."
     else
-        echo "swatch is already started"
+        $DAEMON $OPTS
     fi
 }
+
 stop() {
-    # Stop daemons.
-    ls /var/run/swatch_*.pid > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        echo -n "Shutting down swatch"
-        for pid in /var/run/swatch_*.pid
-        do
-           kill $(cat $pid)
-           rm -f $pid
-        done
-        echo
-        rm -f /var/lock/subsys/swatch /tmp/.swatch_script.*
+    if [ -f "$PIDFILE" ]
+    then
+        PID=`cat $PIDFILE`
+        if ps h $PID > /dev/null
+        then
+            pkill -P $PID
+        else
+            echo "Error: $NAME is not running, but PID file exists. Deleting it."
+        fi
+        rm -f $PIDFILE
     else
-        echo "swatch is not running"
+        echo "Error: $NAME is not running."
     fi
 }
-status() {
-    ls /var/run/swatch_*.pid > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        echo -n "swatch (pid"
-        for pid in /var/run/swatch_*.pid
-        do
-           echo -n " `cat $pid`"
-        done
-        echo ") is running..."
-    else
-        echo "swatch is stopped"
-    fi
-}
+
 case "$1" in
   start)
-        start
-        ;;
+    echo "Starting $DESC: $NAME"
+    start
+    ;;
   stop)
-        stop
-        ;;
+    echo "Stopping $DESC: $NAME"
+    stop
+    ;;
   restart)
-        stop
-        start
-        ;;
-  status)
-        status
-        ;;
-   *)
-        echo "Usage: swatch {start|stop|restart|status}"
-        exit 1
+    echo "Restarting $DESC: $NAME"
+    stop
+    sleep 1
+    start
+    ;;
+  *)
+    echo "Usage: $0 start|stop|restart"
+    exit 1
+    ;;
 esac
-exit $RETVAL
+
+exit 0
+
 }}}
 
 実行権限を付与
 
 {{{
-% sudo chmod +x /etc/rc.d/init.d/swatch
+% sudo chmod +x /etc/init.d/swatch
 }}}
 
 SWATCH起動
 
 {{{
-% sudo /etc/rc.d/init.d/swatch start
+% sudo /sbin/service swatch start
 }}}
 
-chkconfigに登録
+chkconfigに登録。エラーが出るので後で書式をチェックする
 
 {{{
 % sudo /sbin/chkconfig --add swatch
+insserv: warning: script 'swatch' missing LSB tags and overrides
+insserv: warning: current start runlevel(s) (0 6) of script `umountfs' overwrites defaults (empty).
+insserv: warning: current start runlevel(s) (0 6) of script `umountnfs.sh' overwrites defaults (empty).
+insserv: warning: current start runlevel(s) (0) of script `halt' overwrites defaults (empty).
+insserv: warning: current start runlevel(s) (0 6) of script `umountroot' overwrites defaults (empty).
+insserv: warning: current start runlevel(s) (6) of script `reboot' overwrites defaults (empty).
+insserv: warning: current start runlevel(s) (0 6) of script `sendsigs' overwrites defaults (empty).
+swatch                    0:off  1:off  2:on   3:on   4:on   5:on   6:off
+
 % sudo /sbin/chkconfig swatch on
+insserv: warning: script 'K01swatch' missing LSB tags and overrides
+insserv: warning: script 'swatch' missing LSB tags and overrides
+
 % sudo /sbin/chkconfig --list swatch
 }}}
