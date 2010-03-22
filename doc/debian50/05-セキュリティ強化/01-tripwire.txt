@@ -243,8 +243,8 @@ Wrote policy file: /etc/tripwire/tw.pol
 PATH=/usr/sbin:/usr/bin:/bin:/usr/local/tripwire/sbin
 
 # パスフレーズ設定
-LOCALPASS=xxxxxxxx # ローカルパスフレーズ
-SITEPASS=xxxxxxxx  # サイトパスフレーズ
+LOCALPASS='' # ローカルパスフレーズ
+SITEPASS=''  # サイトパスフレーズ
 cd /etc/tripwire
 
 # Tripwireチェック実行
@@ -253,13 +253,20 @@ tripwire -m c -s -c tw.cfg|mail -s "Tripwire(R) Integrity Check Report in `hostn
 # ポリシーファイル最新化
 twadmin -m p -c tw.cfg -p tw.pol -S site.key > twpol.txt
 perl twpolmake.pl twpol.txt > twpol.txt.new
+
 #twadmin -m P -c tw.cfg -p tw.pol -S site.key -Q $SITEPASS twpol.txt.new > /dev/null
-#twadmin -m P -c tw.cfg -p tw.pol -S site.key twpol.txt.new > /dev/null
+twadmin -m P -c tw.cfg -p tw.pol -S site.key -Q '' twpol.txt.new > /dev/null
+
 rm -f twpol.txt* *.bak
 
 # データベース最新化
-rm -f /usr/local/tripwire/lib/tripwire/*.twd*
-tripwire -m i -s -c tw.cfg -P $LOCALPASS
+rm -f /var/lib/tripwire/dev01.ca.twd
+touch /var/lib/tripwire/dev01.ca.twd
+
+#tripwire -m i -s -c tw.cfg -P $LOCALPASS
+tripwire -m i -s -c tw.cfg -P ''
+
+
 }}}
 
 実行権限を与えます。
@@ -268,8 +275,20 @@ tripwire -m i -s -c tw.cfg -P $LOCALPASS
 % sudo chmod 700 /root/tripwire.sh
 }}}
 
-/etc/crontabにTripwire定期自動実行設定追加
+/etc/cron.daily/tripwireにTripwireの設定ができているので書き換える
 
 {{{
-00 3 * * * root /root/tripwire.sh
+sudo vi /etc/cron.daily/tripwire
 }}}
+
+{{{
+tripwire=/usr/sbin/tripwire
+
+[ -x $tripwire ] || exit 0
+
+umask 027
+
+# $tripwire --check --quiet --email-report
+/root/tripwire.sh
+}}}
+
