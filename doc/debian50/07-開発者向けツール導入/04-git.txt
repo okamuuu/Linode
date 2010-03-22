@@ -1,0 +1,140 @@
+= git =
+
+'''''ソースコードのバージョン管理を行います。'''''
+
+== git導入 ==
+
+検索
+
+{{{
+% sudo aptitude update
+% sudo aptitude upgrade
+% sudo aptitude search git-core
+p   git-core - fast, scalable, distributed revision control system
+}}}
+
+インストール
+
+{{{
+% sudo aptitude -y install git-core
+}}}
+
+バージョン確認
+
+{{{
+% git --version
+git version 1.5.6.5
+}}}
+
+== 初期設定 ==
+
+% git config --global user.name "hoge"
+% git config --global user.email hoge@gmail.com
+
+== git用ユーザーを作成 ==
+
+gitユーザーを作成します。
+
+{{{
+% sudo adduser git --shell /bin/rbash
+}}}
+
+gitコマンドのみを使用可能にします。
+
+{{{
+% sudo mkdir /home/git/bin
+% which git
+/usr/bin/git
+% sudo ln -s /usr/bin/git /home/git/bin
+}}}
+
+.bash_profileを書き換える
+
+{{{
+% sudo vi /home/git/.profile
+}}}
+
+{{
+# PATH="$HOME/bin:$PATH"
+PATH=/home/git/bin
+}}}
+
+== 認証 ==
+
+認証で必要なディレクトリ作成と秘密鍵の設置を行います。
+
+{{{
+% sudo mkdir /home/git/.ssh
+% sudo chmod 700 /home/git/.ssh
+}}}
+
+{{{
+% sudo cp /home/homepage/.ssh/authorized_keys /home/git/.ssh/
+% sudo chown git:git /home/git/.ssh/
+% sudo chown git:git /home/git/.ssh/authorized_keys
+}}}
+
+== 動作確認 ==
+
+次の手順が正しく行えるかを確認します。
+
+ * 開発環境、ローカルのリポジトリ(master)でファイルを作成して追加。
+ * Linode、リモートのリポジトリ(origin)にプッシュする。
+
+sshの設定
+
+{{{
+local% vi ~/.ssh/config
+}}}
+
+{{{
+Host dev01.ca
+    User git
+    Hostname dev01.ca
+    PreferredAuthentications publickey
+    IdentityFile ~/.ssh/dev01.ca/id_dsa
+}}}
+
+masterリポジトリを作成します。
+
+{{{
+local% cd ~/project/
+local% mkdir myapp
+local% cd myapp
+local% git init 
+}}}
+
+ローカルレポジトリに新規ファイルを追加してコミットします。
+
+{{{
+local% touch firstfile
+local% git add firstfile
+local% git commit -m 'first commit'
+}}}
+
+リモートレポジトリを作成します。
+
+{{{
+% hostname
+dev01.ca
+% sudo su git
+$ mkdir -p /home/git/repos/myapp.git
+$ git --bare --git-dir=/home/git/repos/myapp.git init
+}}}
+
+ローカルリポジトリからプッシュします。
+master を origin にプッシュ
+
+{{{
+local% cd ~/project/myapp
+local% remote add origin ssh://git@dev01.ca/home/git/repos/myapp.git
+local% git push origin master 
+}}}
+
+リモートリポジトリで管理されているソースコードを公開サーバーなどに設置する。
+
+{{{
+% cd ~/project/
+% git clone ssh://git@example.com/home/git/repos/example.git
+}}}
+
