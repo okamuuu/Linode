@@ -4,7 +4,7 @@
 
 == Dovecotインストール ==
 
-imap, pop3両方に対応します。
+imap, pop3両方をインストールします。
 
 {{{
 % sudo aptitude -y install dovecot-imapd
@@ -19,7 +19,7 @@ imap, pop3両方に対応します。
 % sudo vi /etc/dovecot/dovecot.conf
 }}}
 
-imaps, pop3sにのみ対応させます。
+''imaps'', ''pop3s''にのみ対応させます。
 
 {{{
 protocols = imaps pop3s
@@ -32,7 +32,7 @@ mail_location = maildir:~/Maildir	# メールボックス形式をMaildirに
 % sudo /sbin/service dovecot start
 }}}
 
-サーバー起動時に自動的にdovecotも立ち上がる事を確認
+サーバー起動時に自動的に''dovecot''も立ち上がる事を確認
 
 {{{
 % sudo /sbin/chkconfig --list dovecot

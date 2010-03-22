@@ -8,7 +8,7 @@
 % sudo aptitude search mailx
 }}}
 
-導入
+''mailx''をインストール
 
 {{{
 sudo aptitude -y install mailx

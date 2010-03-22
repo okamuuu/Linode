@@ -16,7 +16,7 @@ p   chkrootkit - ルートキット検知ツール
 % sudo aptitude search chkrootkit
 }}}
 
-実行結果にINFECTEDが含まれる行が無い事を確認します。
+実行結果に''INFECTED''が含まれる行が無い事を確認します。
 
 {{{
 % sudo chkrootkit | grep INFECTED
@@ -91,16 +91,46 @@ rm -f $TMPLOG
 % sudo chmod 0700 /root/chkrootkit.sh
 }}}
 
-cronに登録
+/etc/cron.daily/chkrootkitに設定ファイルが登録されているので書き換える
 
 {{{
-% sudo vi /etc/crontab
-10 3 * * * root /root/chkrootkit.sh
+% sudo vi /etc/cron.daily/chkrootkit
+}}}
+
+{{{
+#!/bin/sh -e
+
+/root/chkrootkit.sh
+
+#CHKROOTKIT=/usr/sbin/chkrootkit
+#CF=/etc/chkrootkit.conf
+#LOG_DIR=/var/cache/chkrootkit
+
+#if [ ! -x $CHKROOTKIT ]; then
+#  exit 0
+#fi
+
+#if [ -f $CF ]; then
+#    . $CF
+#fi
+
+#if [ "$RUN_DAILY" = "true" ]; then
+#    if [ "$DIFF_MODE" = "true" ]; then
+#        $CHKROOTKIT $RUN_DAILY_OPTS > $LOG_DIR/log.new 2>&1
+#        if [ ! -f $LOG_DIR/log.old ] \
+#           || ! diff -q $LOG_DIR/log.old $LOG_DIR/log.new > /dev/null 2>&1; then
+#            cat $LOG_DIR/log.new
+#        fi
+#        mv $LOG_DIR/log.new $LOG_DIR/log.old
+#    else
+#        $CHKROOTKIT $RUN_DAILY_OPTS
+#    fi
+#fi
 }}}
 
 == 確認 ==
 
-rootkitを検出しない限りはメールがこないのですが念のためエラーがないか実行しておくとよいでしょう
+''rootkit''を検出しない限りはメールがこないのですが念のためエラーがないか実行しておくとよいでしょう
 
 {{{
 % sudo /root/chkrootkit.sh
