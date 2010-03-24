@@ -10,6 +10,16 @@
 
 debianには''integrit''もありますが、当サイトではtripwireを紹介します。これは管理人の習慣に依存しているためでtripwireのほうが優れている、という意味ではありません。
 
+== パスワードについて ==
+
+Tripwireにはパスワードが次の2種類あります。
+
+ * ローカルキー
+ * サイトキー
+
+''ローカルキー''はデータベースの更新とレポートファイルの保護に使用します。
+''サイトキー''は設定ファイル、ポリシーファイルの暗号化・署名に使用します。
+
 == インストール ==
 
 {{{
@@ -58,7 +68,7 @@ REPORTLEVEL = 4
 
 {{{
 % sudo twadmin --create-cfgfile -S /etc/tripwire/site.key /etc/tripwire/twcfg.txt 
-Please enter your site passphrase: []	←空エンター※パスワードを設定したほうがよい
+Please enter your site passphrase: []	※任意で設定したパスワード
 Wrote configuration file: /etc/tripwire/tw.cfg
 
 }}}
@@ -176,7 +186,7 @@ close(POL) ;
 
 {{{
 % sudo twadmin -m P -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key /etc/tripwire/twpol.txt.new
-Please enter your site passphrase: []	←空エンター※パスいれたほうが良い
+Please enter your site passphrase: []	※任意で設定したパスワード
 Wrote policy file: /etc/tripwire/tw.pol
 }}}
 
@@ -187,6 +197,8 @@ Wrote policy file: /etc/tripwire/tw.pol
 }}}
 
 === ポリシーファイルを復元する場合 ===
+
+この作業は行わなくても良い手順ですが、参考のために掲載しておきます。
 
 {{{
 % sudo twadmin -m p -c /etc/tripwire/tw.cfg -p /etc/tripwire/tw.pol -S /etc/tripwire/site.key > /etc/tripwire/twpol.txt
@@ -228,9 +240,18 @@ Wrote policy file: /etc/tripwire/tw.pol
 % sudo rm -f /root/test.txt
 }}}
 
-== シェルスクリプト作成および自動化 ==
+このように、tripwireが元々あったファイル情報を記憶しておいて、差異が生じた場合はこれを知らせる。
+つまり''改ざん防止''に役立ちます。
 
-シェルスクリプトを作成します。
+== シェルスクリプト作成 ==
+
+ファイルに差異が生じているかどうかを自動化するためのシェルスクリプトを作成します。
+ただし、ファイルに差異があるかどうかを記憶するデータベースの更新は手作業で行います。
+
+これを自動化するにはパスワードをシェルスクリプトに記述する必要が出てきてしまい、そうすると
+仮に第三者がファイルを改ざんしたあと、データベースを更新してしまう、という可能性が残りためです。
+
+=== 定期実行スクリプト ===
 
 {{{
 % sudo vi /root/tripwire.sh
@@ -242,31 +263,10 @@ Wrote policy file: /etc/tripwire/tw.pol
 #!/bin/zsh
 PATH=/usr/sbin:/usr/bin:/bin:/usr/local/tripwire/sbin
 
-# パスフレーズ設定
-LOCALPASS='' # ローカルパスフレーズ
-SITEPASS=''  # サイトパスフレーズ
 cd /etc/tripwire
 
 # Tripwireチェック実行
 tripwire -m c -s -c tw.cfg|mail -s "Tripwire(R) Integrity Check Report in `hostname`" root
-
-# ポリシーファイル最新化
-twadmin -m p -c tw.cfg -p tw.pol -S site.key > twpol.txt
-perl twpolmake.pl twpol.txt > twpol.txt.new
-
-#twadmin -m P -c tw.cfg -p tw.pol -S site.key -Q $SITEPASS twpol.txt.new > /dev/null
-twadmin -m P -c tw.cfg -p tw.pol -S site.key -Q '' twpol.txt.new > /dev/null
-
-rm -f twpol.txt* *.bak
-
-# データベース最新化
-rm -f /var/lib/tripwire/dev01.ca.twd
-touch /var/lib/tripwire/dev01.ca.twd
-
-#tripwire -m i -s -c tw.cfg -P $LOCALPASS
-tripwire -m i -s -c tw.cfg -P ''
-
-
 }}}
 
 実行権限を与えます。
@@ -292,3 +292,73 @@ umask 027
 /root/tripwire.sh
 }}}
 
+=== 手動更新 ===
+
+{{{
+% sudo vi /root/reset_tw_db.sh
+}}}
+
+{{{
+#!/bin/zsh
+PATH=/usr/sbin:/usr/bin:/bin:/usr/local/tripwire/sbin
+
+# check command args.
+if [ $# -lt 1 ]; then
+  echo >&2 "usage: $0 [-s|--sitekey] [-l|--localkey]"
+  exit 1
+fi
+
+OPT=`getopt -o s:l: -l sitekey:,localkey: -- $*`
+
+if [ $? != 0 ]; then
+  echo >&2 "usage: $0 [-s|--sitekey] [-l|--localkey]"
+  exit 1
+fi
+
+eval set -- $OPT
+while [ -n "$1" ]; do
+  case $1 in
+    -s|--sitekey) SITEKEY=$2 ; shift 2;;
+    -l|--localkey) LOCALKEY=$2 ; shift 2;;
+    --) shift; break;;
+    *) echo "Unknown option($1) used."; exit 1;;
+  esac
+done
+
+cd /etc/tripwire
+
+# Tripwireチェック実行
+tripwire -m c -s -c tw.cfg|mail -s "Tripwire(R) Integrity Check Report in `hostname`" root
+
+# ポリシーファイル最新化
+twadmin -m p -c tw.cfg -p tw.pol -S site.key > twpol.txt
+perl twpolmake.pl twpol.txt > twpol.txt.new
+
+twadmin -m P -c tw.cfg -p tw.pol -S site.key -Q $SITEKEY twpol.txt.new > /dev/null
+
+rm -f twpol.txt* *.bak
+
+# データベース最新化
+rm -f /var/lib/tripwire/dev01.ca.twd
+touch /var/lib/tripwire/dev01.ca.twd
+
+tripwire -m i -s -c tw.cfg -P $LOCALKEY
+}}}
+
+実行権限を与えます。
+
+{{{
+% sudo chmod 700 /root/reset_tw_db.sh
+}}}
+
+このスクリプトはときどきログインして次のようにして実行して下さい。
+
+{{{
+/root/reset_tw_db.sh --sitekey 'xxxx' --localkey 'yyyy'
+}}}
+
+このサイト通りに設定している場合は毎日メールが送られてきます。
+メールには変更されたファイルなどが記述されているので、この変更が多くなりすぎたら
+このスクリプトを実行すると良いでしょう。
+
+※expectなどでパスワードを隠す処理を後で書く
