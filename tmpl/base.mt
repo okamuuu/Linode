@@ -7,6 +7,8 @@
     <title><%= $archive->title %> | <%= $site_name %></title>
     <meta name="keywords" content="<%= join ', ', @{ $archive->keywords } %>" />
     <meta name="description" content="<%= $archive->description %>" />
+	<meta name="author" content="http://github.com/okamuuu" />
+	<meta name="copyright" content="Copyright (C) okamura" />
     <meta name="robots" content="all" />
 
 % if ( $is_home ) {
@@ -45,7 +47,7 @@
 					<br />
 
 					<a href="http://www.add9.biz/jump">Jump Attack Forum</a> | 
-					<a href="http://dancepod.tv">DancePod.tv</a>
+					<a href="http://dancepod.tv">DancePod.tv</a> 
 				</p>
 			</div>
 	    </div>
