@@ -1,0 +1,54 @@
+= 開発ツール =
+
+'''''makeやgccなど、開発者に必要とされるツールをあらかじめ導入しておきます。'''''
+
+== 概要 ==
+
+''linode''はXenベースの''VPS''サーバーで、使用できるディストリビューションはLinode用に最小限の機能のみをインストールしているだけです。
+
+このため開発ツールを自力でいくつかインストールする必要があります。
+
+== ツール一覧 ==
+
+以下、管理人がサーバーに導入している開発ツールです。
+少し情報があいまいで、もしかしたら不要なツールがあるかもしれませんがご容赦ください。
+
+|| 名称			|| 説明 	||
+|| telnet		|| telnet クライアント ||
+|| make			|| make ||
+|| zip			|| zip ||
+|| unzip		|| unzip ||
+|| tar			|| GNU 版 tar アーカイブユーティリティ ||
+|| gzip			|| GNU 圧縮ユーティリティ	||
+|| bind9		|| 当サイトではDNSサーバーを構築方法を紹介しませんが、CPANモジュールでこれがないとmake testが失敗するものがあったと記憶しています。必要だったのはutilsかもしれません。 ||
+|| gcc 			|| GNU Cコンパイラ ||
+|| bzip2		|| 高品質ブロックソートファイル圧縮 - ユーティリティ ||
+|| sysstat		|| sar、iostat および mpstat - Linux 用システム性能ツール ||
+|| libaio1		|| 非同期I/Oを行うためのライブラリ ||
+|| libstdc++6	|| GNU 標準 C++ ライブラリ ||
+|| lynx			|| テキストモード WWW ブラウザ  ||
+|| imagemagick  || 画像操作プログラム ||
+|| libncurses5-dev  || ターミナル関連 ||
+|| expect 		|| 対話的なアプリケーションを自動化するプログラム ||
+|| links		|| テキストモードで起動するウェブブラウザ ||
+|| ncftp		|| A user-friendly and well-featured FTP client ||
+|| ftp			|| FTP クライアント	||
+|| zlibc		|| 	||
+|| perltidy || Perlで書かれたコードを整形してくれます。  ||
+|| perl-doc || ||
+|| ack-grep || ||
+|| expat || Cで書かれたXMLパーサ ||
+
+※''build-essential''といのもあります
+
+== 導入 ==
+
+{{{
+% sudo aptitude update
+% sudo aptitude upgrade
+% sudo aptitude install -y telnet make zip unzip tar gzip make bind9 \
+                           gcc sysstat libaio1 libstdc++6 lynx \
+                           imagemagick ncurses-dev expect ncftp \
+                            ftp zlibc perltidy expat
+}}}
+

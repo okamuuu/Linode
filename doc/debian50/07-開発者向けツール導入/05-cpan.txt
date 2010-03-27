@@ -1,0 +1,106 @@
+= CPAN =
+
+'''''VPSのようにroot権限が使えるサーバーばかりとは限りません。非rootでのCPAN環境を構築する手法を紹介します。'''''
+
+== local::libとcpanminus == 
+
+- local::libは非root環境であっても
+- cpanminusは宮川達彦氏がgithub上で公開しているcpan shellに代わるPerlモジュール管理ツールです。
+
+== local::libを導入 ==
+
+{{{
+% cd /usr/local/src
+% wget http://search.cpan.org/CPAN/authors/id/A/AP/APEIRON/local-lib-1.005001.tar.gz
+% tar xzvf local-lib-1.005001.tar.gz
+% cd local-lib-1.005001
+}}}
+
+Makefile.PLを作成します。
+
+{{{
+% perl Makefile.PL
+}}｝
+
+{{{
+% make
+% make test
+% sudo make install
+}}}
+
+環境変数、ディレクトリ作成。exportされている値は各自で異なる場合があります。今回この構築ではuser名をhomepageにしているのでこうなりました。
+
+{{{
+% perl -Mlocal::lib
+Attempting to create directory /home/homepage/extlib
+Attempting to create file /home/homepage/extlib/.modulebuildrc
+export MODULEBUILDRC="/home/homepage/extlib/.modulebuildrc"
+export PERL_MM_OPT="INSTALL_BASE=/home/homepage/extlib"
+export PERL5LIB="/home/homepage/extlib/lib/perl5:/home/homepage/extlib/lib/perl5/i486-linux-gnu-thread-multi"
+export PATH="/home/homepage/extlib/bin:$PATH"
+}}}
+
+環境変数はここで出力されたのものをそのまま.zshrcに記述しておきます。
+
+{{{
+% vi ~/.zshrc
+}}}
+
+{{{
+export MODULEBUILDRC="$HOME/extlib/.modulebuildrc"
+export PERL_MM_OPT="INSTALL_BASE=$HOME/extlib"
+export PERL5LIB="$HOME/extlib/lib/perl5:$HOME/extlib/lib/perl5/i486-linux-gnu-thread-multi"
+export PATH="$HOME/extlib/bin:$PATH"
+}}}
+
+反映
+
+{{{
+% source ~/.zshrc
+}}}
+
+== cpanminusを導入 ==
+
+''github''からcpanminusをcloneします。
+
+{{{
+% mkdir -p ~/watch
+% cd ~/watch
+% git clone git://github.com/miyagawa/cpanminus.git
+% cd cpanminus
+}}}
+
+インストール
+
+{{{
+% perl Makefile.PL
+% make
+% make test
+% sudo make install
+% make clean
+}}}
+
+== テスト ==
+
+{{{
+% cpanm Perl6::Say --local-lib="~/extlib"
+}}}
+
+== メモと反省 ==
+
+まっさらな状態で上記作業を再確認する予定
+
+local::libが依存しているモジュール
+
+- ExtUtils::MakeMaker 
+- ExtUtils::Install   
+- ExtUtils::CBuilder  
+- ExtUtils::ParseXS   
+- Module::Build       
+- CPAN                
+
+次のコマンドを確認しながらCPANモジュールをインストールしたほうがよかった。
+{{{
+tail -f $HOME/.cpanm/builtlog
+}}}
+
