@@ -1,0 +1,57 @@
+name: 'Example'
+
+cms:
+  doc_dir: 'doc'
+  root_dir: 'root'
+  backup_dir: 'backup'
+  css_files:
+    - 'common/css/base.css'
+    - 'common/css/extend.css'
+    - 'common/css/content.css'
+
+externals:
+  - href: 'http://dancepod.tv/'
+    name: 'DancePod.TV'
+  - href: 'http://linode.jp/'
+    name: 'Linode.JP'
+  - href: 'http://www.add9.biz/phpunit/'
+    name: 'PHPUnit'
+  - href: 'http://www.add9.biz/symfony/'
+    name: 'Symfony'
+  - href: 'http://www.add9.biz/moose/'
+    name: 'Moose'
+  - href: 'http://www.add9.biz/design_pattern/'
+    name: 'Design Pattern'
+  - href: 'http://www.add9.biz/jump/'
+    name: 'Jump Attack'
+
+metadata:
+  site_name: 'Linode.JP'
+  author: 'okamura'
+  copyright: 'Copyright (C) All Rights Reserved.'
+  base_url: 'http://linode.jp/'
+
+model:
+  tab_data:
+    base_url: '../'
+    categories:
+      - dir: home
+        name: HOME
+      - dir: 'centos53'
+        name: 'CentOS 5.3'
+      - dir: 'debian50'
+        name: 'CentOS 5.0'
+
+adsense_data:
+  client: pub-3627018862025650
+  slot: 5378782603
+
+analytics_data:
+  account: UA-16798328-1
+
+ftp_data:
+  hostname: XXX
+  username: XXX
+  password: XXX
+
+

@@ -1,0 +1,127 @@
+= CPAN =
+
+'''''Perlを使う理由を語るならCPANは絶対にはずせません'''''
+
+== CPANとは ==
+
+CPAN(読みシーパン（クパン）､Comprehensive Perl Archive Network)はPerlのライブラリ・モジュールソフトウェアやその他のPerlで書かれたソフトウェアを集めた巨大なアーカイブで、世界中のサーバにその内容がミラー（コピー）されている。再利用性・汎用性の高いモジュールが登録されており、Perl プログラマができるだけ車輪の再発明をせずに済むための支援環境となっている。登録モジュールの検索システムも提供されているため、Perl プログラマは望む機能を持ったモジュールを容易に入手することができる。
+
+CPAN には、大小さまざまなモジュールが登録されており、それらの依存関係もデータベース化されている。目的のモジュールと同時に、それの依存する他のモジュールを芋づる式にダウンロードし、インストールすることが可能である。UNIX 系 OS および Windows で利用できる "CPAN シェル" という専用のソフトウェアが存在する。このシェルはユーザの手持ちのライブラリの管理・CPAN ミラーへの問い合わせ・モジュールのダウンロードを行うものであり、ユーザは少ないコマンド操作によってモジュールの検索・導入を行うことができる。
+
+wikipediaより引用
+
+== cpan-miniについて ==
+
+''CPAN''にはあなたが必要なモジュールと、そうでないモジュールがあると思いますが、CPANモジュールは最新のソースコードのみであればそれほど大した量ではないのでcpan-miniで丸ごとソースを保存しておきます。
+
+== cpan-miniを導入 ==
+
+検索
+
+{{{
+% sudo aptitude update
+% sudo aptitude upgrade
+% sudo aptitude search libcpan-mini-perl
+p   libcpan-mini-perl - create a minimal mirror of CPAN
+}}}
+
+インストール
+
+{{{
+% sudo aptitude -y install libcpan-mini-perl
+}}}
+
+バージョン確認
+
+{{{
+% git --version
+git version 1.5.6.5
+}}}
+
+CPANモジュールのソースコードをdev01.ca上に保存します。
+ちなみに最初にこの作業をすると結構時間がかかります。
+
+[http://www.cpan.org/SITES.html ミラーはこちら参照]
+
+{{{
+% sudo minicpan -r http://www.perl.com/CPAN/ -l /root/minicpan
+}}}
+
+確認
+
+{{{
+% sudo ls /root/minicpan
+authors  modules
+}}}
+
+
+次に、この ~/minicpan からインストールするように cpanminus 側を設定します。
+''prerequisites_policy''というのは何度もYesと答えたくない場合にそうします。
+
+{{{
+# cpan
+cpan> o conf prerequisites_policy follow
+cpan> o conf urllist unshift file:///root/minicpan
+cpan> o conf
+cpan> o conf commit
+cpan> q
+}}}
+
+
+== 定期実行 ==
+
+次回からは初回ほど時間がかからないので''cron''で定期実行するようにします。
+
+{{{
+% sudo vi /etc/cron.daily/minicpan
+0 5 * * * minicpan -q -r http://www.perl.com/CPAN/ -l /root/minicpan
+}}}
+
+== CPANモジュールのインストールエラー ==
+
+=== Term::ReadKey ===
+
+Could not make: Unknown error とでたので手動で下記操作を行う
+
+{{{
+% sudo su
+# cd /root/.cpan/build/TermReadKey-2.30-NkuqYW
+# perl Makefile.PL
+# make
+# make install
+}}}
+
+=== Compress-Raw-Zlib ===
+
+同上
+
+== Bundel::CPAN ==
+
+Test::Harness is up to date (3.21).
+ExtUtils::CBuilder is up to date (0.2703).
+ExtUtils::MakeMaker is up to date (6.56).
+Module::Build is up to date (0.3603).
+File::Spec
+File::Temp is up to date (0.22).
+Scalar::Util
+Test::More 
+Data::Dumper
+Digest::SHA
+File::HomeDir 
+
+Compress::Raw::Bzip2 
+Compress::Raw::Zlib
+IO::Compress::Base
+IO::Zlib is up to date (1.10).
+Archive::Tar is up to date (1.58).
+Archive::Zip is up to date (1.30).
+Net::Cmd is up to date (2.29).
+Net::FTP is up to date (2.77).
+Term::ReadKey is up to date (2.30).
+Term::ReadLine::Perl is up to date (1.0303).
+YAML is up to date (0.71).
+Parse::CPAN::Meta is up to date (1.40).
+Text::Glob is up to date (0.08).
+CPAN is up to date (1.9402).
+File::Which is up to date (1.09).
+

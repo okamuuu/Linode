@@ -12,6 +12,6 @@ nytprof/*
 *.out
 *.db
 *.log
-conf/linode_local.yml
+conf/config_local.yml
 backup/*
 core.*

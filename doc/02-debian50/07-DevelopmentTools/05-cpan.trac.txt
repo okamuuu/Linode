@@ -2,10 +2,10 @@
 
 '''''VPSのようにroot権限が使えるサーバーばかりとは限りません。非rootでのCPAN環境を構築する手法を紹介します。'''''
 
-== local::libとcpanminus == 
+== local::libとcpanminus ==
 
-- local::libは非root環境であっても
-- cpanminusは宮川達彦氏がgithub上で公開しているcpan shellに代わるPerlモジュール管理ツールです。
+ * local::libは非root環境であってもCPANモジュールをインストールできる。
+ * cpanminusは宮川達彦氏がgithub上で公開しているcpan shellに代わるPerlモジュール管理ツールです
 
 == local::libを導入 ==
 
@@ -20,7 +20,7 @@ Makefile.PLを作成します。
 
 {{{
 % perl Makefile.PL
-}}｝
+}}}
 
 {{{
 % make
@@ -83,24 +83,6 @@ export PATH="$HOME/extlib/bin:$PATH"
 == テスト ==
 
 {{{
-% cpanm Perl6::Say --local-lib="~/extlib"
-}}}
-
-== メモと反省 ==
-
-まっさらな状態で上記作業を再確認する予定
-
-local::libが依存しているモジュール
-
-- ExtUtils::MakeMaker 
-- ExtUtils::Install   
-- ExtUtils::CBuilder  
-- ExtUtils::ParseXS   
-- Module::Build       
-- CPAN                
-
-次のコマンドを確認しながらCPANモジュールをインストールしたほうがよかった。
-{{{
-tail -f $HOME/.cpanm/builtlog
+% cpanm Perl6::Say
 }}}
 
