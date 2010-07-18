@@ -40,7 +40,7 @@ model:
       - dir: 'centos53'
         name: 'CentOS 5.3'
       - dir: 'debian50'
-        name: 'CentOS 5.0'
+        name: 'Debian 5.0'
 
 adsense_data:
   client: pub-3627018862025650
