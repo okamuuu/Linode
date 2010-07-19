@@ -1,0 +1,56 @@
+= 認証ページ作成 =
+
+'''''nginxでの認証ページ作成方法を紹介します。'''''
+
+== 認証ページを準備 ==
+
+今回は前章で使用したBrankPageへのアクセスに対して認証が必要となるようにします。
+
+== Basic認証のファイル作成 ==
+
+本来はDigest認証を使用したいのですが、今回はBasic認証を行います。
+
+=== パスワードファイルを作る ===
+
+htpasswdコマンドが必要なのでhttpdを導入する。
+
+{{{
+% sudo yum -y install httpd
+}}}
+
+{{{
+% /usr/bin/htpasswd -c /home/homepage/project/BlankPage/.htpasswd hogehoge
+New password:
+Re-type new password:
+Adding password for user hogehoge
+}}}
+
+追加したければ、-cを抜いて、追加登録する。
+
+アクセス権を604に設定する。
+
+{{{
+chmod 0604 /home/homepage/project/BlankPage/.htpasswd
+}}}
+
+== 設定ファイル ==
+
+{{{
+% sudo vi /etc/nginx/nginx.conf
+}}}
+
+{{{
+location  /  {
+  auth_basic            "Restricted";
+  auth_basic_user_file  conf/htpasswd;
+}
+}}}
+
+再起動
+
+{{{
+% sudo /sbin/ssrvice nginx configtest
+% sudo /sbin/service nginx restart
+}}}
+
+www.blank-page.comへアクセスして確認する。
