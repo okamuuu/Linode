@@ -1,0 +1,106 @@
+= Nginx =
+
+'''''エンジンネックスは軽量高性能なWebサーバです。'''''
+
+== Nginxとは ==
+
+HTTP サーバであり、ロードバランサーでありながら、Mail proxy の機能も持っている。IMAP/POP3/SMTP をバックエンドとすることが可能。
+
+機能がapacheよりも少ないので静的HTMLの出力はapacheよりも高速であるらしい。
+
+== インストール ==
+
+{{{
+% sudo yum -y install --enablerepo=epel nginx
+}}}
+
+== 設定 ==
+
+{{{
+% sudo vi /etc/nginx/nginx.conf
+}}}
+
+以下の箇所を編集
+
+{{{
+worker_processes  4;
+keepalive_timeout  45;
+gzip  on;
+gzip_comp_level 2;
+gzip_proxied any;
+gzip_types      text/plain text/html text/css application/x-javascript text/xml application/xml 
+application/xml+rss text/javascript;
+}}}
+
+== virtualHost ==
+
+''virtualHost''の設定を行います。
+
+最初にテストページを作成します。
+
+{{{
+% mkdir -p ~/project/BlankPage/root ~/project/BlankPage/logs
+% echo blank >> ~/project/BlankPage/root/index.html
+% chmod 0755 ~/project/BlankPage/root/index.html
+}}}
+
+一般ユーザーのディレクトリ以下を他ユーザー(nginx)が実行可能にする。
+{{{
+% chmod 0701 ~
+}}}
+
+virtualHost設定を記述します。
+
+{{{
+% sudo vi /etc/nginx/nginx.conf
+}}}
+
+記述内容
+
+{{{
+http {
+  server {
+    listen          80;
+    server_name     www.blank-page.com;
+    
+    access_log  /home/homepage/project/BlankPage/logs/blank-page.com.access.log main;
+ 
+    location / {
+      root   /home/homepage/project/BlankPage/root;
+      index index.html;
+    }
+  }
+}}}
+
+文法チェック
+
+{{{
+% sudo /sbin/service nginx configtest
+}}}
+
+再起動
+
+{{{
+% sudo /sbin/service nginx restart
+}}}
+
+== 名前解決 ==
+
+まだDNSの設定をしていない場合は次の作業を行います。
+
+=== windowsの場合 ===
+
+C:\WINDOWS\system32\drivers\etc\hostsをテキストエディタで開き、次の様な記述を追記します。XXXの場所はあなたが契約しているLinodeのIPアドレスを当てはめてください。
+
+{{{
+74.207.XXX.XXX www.blank-page.com
+}}}
+
+
+== 確認 ==
+
+ブラウザで次の作業を行います。
+
+* IPアドレスが直接入力された場合はblankと表示される
+* www.blank-page.comとしてリクエストされた場合はblankと表示される
+
