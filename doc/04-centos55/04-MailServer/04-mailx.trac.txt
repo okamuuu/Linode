@@ -1,0 +1,20 @@
+= mailコマンド導入 =
+
+'''''サーバー監視、運用スクリプトで用いる管理メール送信コマンドを導入します。'''''
+
+== パッケージの確認 ==
+
+{{{
+% sudo rpm -qa mailx
+}}}
+
+パッケージが導入されていない場合はyum installを行います。
+
+{{{
+% sudo yum list | grep mailx
+mailx.i386                               8.1.1-44.2.2                  base
+}}}
+
+{{{
+% sudo yum -y install mailx
+}}}

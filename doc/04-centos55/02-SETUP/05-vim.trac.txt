@@ -1,0 +1,150 @@
+= vi拡張 =
+
+'''''viは自由に拡張する事ができます。[[BR]]ここでは一例を紹介します。'''''
+
+== ユーザーモードに戻る ==
+
+この章の前にsudoコマンドをインストールしていると思いますので、以降はsudoを使ったサービスを用います。
+
+== 確認 ==
+
+''vim''が導入されているかどうかを確認します。
+
+{{{
+$ sudo yum list | grep vim
+vim-common.i386                          2:7.0.109-4.el5_2.4z          installed
+vim-enhanced.i386                        2:7.0.109-4.el5_2.4z          installed
+vim-minimal.i386                         2:7.0.109-6.el5               installed
+vim-X11.i386                             2:7.0.109-6.el5               base
+}}}
+
+vim-X11はGUIインターフェースで使用しますが当サイトではCUIインターフェースでの操作しか
+紹介しておりませんので不要です。
+
+== aliasの設定 ==
+
+vi と入力してもvimが反応するように次のコマンドを実行します。
+
+{{{
+$ alias vi="vim"
+}}}
+
+== 標準の文字コードをutf8にする ==
+
+全ユーザーに適用させるように設定する
+
+{{{
+$ sudo vi /etc/sysconfig/i18n
+}}}
+
+記述した設定ファイルを適用
+
+{{{
+$ source /etc/sysconfig/i18n
+}}}
+
+確認
+
+{{{
+$ echo $LANG
+ja_JP.UTF-8
+}}}
+
+一度ここでputtyでの接続を終了してから、再度接続をしてください。文字コードの変更を反映させるためです。
+
+※反映させる方法があるとは思いますが調べる手間を惜しみました。ご了承ください。
+
+== 設定ファイル編集 ==
+
+homepageユーザーのvim設定ファイルを編集します。
+
+{{{
+$ vi ~/.vimrc
+}}}
+
+次の内容を記述します。
+
+{{{
+" 編集中のファイル名を表示
+" 画面の左側に常時''行番''を表示する。
+" ルーラーを表示する。
+set title
+set number
+set ruler
+
+" タブの見掛けの表示幅を4文字分にする。
+" オートインデント時に使用するインデントの深さも4文字分にする。
+" 自身がタブを入力時した際に、タブの代わりに4文字の半角スペースに置き換える
+set tabstop=4
+set shiftwidth=4 
+set softtabstop=4
+
+" タブが挿入された文章を編集する場合、タブの代わりに半角スペースに置き換えるようにする。
+" 行頭の余白内でTabを打ち込むと'shiftwidth'の数だけインデントする。
+set expandtab 
+set smarttab
+
+" インクリメンタルサーチ
+set incsearch
+
+" 対括弧の表示
+" モード表示
+set showmatch
+set showmode
+
+" 全角スペースを視覚化する
+highlight ZenkakuSpace cterm=underline ctermfg=lightblue guibg=whilte
+match ZenkakuSpace /＿/
+
+" キーバインドをEmacs スタイルにする。
+" Ctrl+Aで行頭へ移動
+" Ctrl＋Bで一文字戻る
+" Ctrl+Dでカーソルの下の文字を削除
+" Ctrl+Eで行末へ移動
+" Ctrl+Fで一文字進む
+
+:noremap <C-A>  <Home>
+:noremap <C-B>   <Left>
+:noremap <C-D>   <Del>
+:noremap <C-E>   <End>
+:noremap <C-F>   <Right>
+
+" コマンドエイリアス
+:noremap ,t    :!prove -vl %<CR>
+:noremap ,pt   :%!perltidy %<CR>
+:noremap ,ptv  :! perltidy<CR>
+:noremap ,gcc :!gcc -Wall -o %< %<CR>:!%<<CR>
+
+" 日時の入力補助
+:inoremap <expr> ,df strftime('%Y-%m-%dT%H:%M:%S')
+:inoremap <expr> ,dd strftime('%Y-%m-%d')
+:inoremap <expr> ,dt strftime('%H:%M:%S')
+
+" コロンを識別子の有効な一部として認識させる
+set iskeyword+=:
+
+" コメントを見やすい色へ変更
+hi Comment cterm=bold ctermbg=black
+
+}}}
+
+== ヘルプの使い方 ==
+
+コマンドモードで次のコマンドを実行します。
+
+{{{
+:help
+}}}
+
+ウィンドウが2つに分かれてます。このウィンドウを次のコマンドで行き来します。
+
+{{{
+[Ctrl-w][Ctrl-w]
+}}}
+
+次のコマンドでカレントウィンドウを閉じます。
+
+{{{
+[Ctrl-w]c
+
+}}}

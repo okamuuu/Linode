@@ -1,0 +1,85 @@
+= rsyncクライアント導入 =
+
+'''''Linodeに万が一障害が発生した場合に備えてデータのバックアップを取得します。'''''
+
+== cwRsyncインストール ==
+
+Windows上で動作する[http://www.itefix.no/i2/node/10650 rsyncクライアント]である''cwRsync''をダウンロードします。
+
+ダウンロードしたzipファイルを解凍してでてきたインストーラを実行してインストールして下さい。2009年9月の時点では
+最新バージョンは3.1.0のようです。
+
+== cwRsync用の公開鍵と秘密鍵を作成 ==
+
+cwRsyncでサーバーへログインする際に使用する鍵ペアを作成します。
+以下はWindowsXPの場合です。
+
+※当サイト管理人は自宅が固定IPの為、パスフレーズなしの鍵ペアを作成しています。
+
+{{{
+C:\>cd C:\Program Files\cwRsync\bin
+C:\Program Files\cwRsync\bin>ssh-keygen -t rsa -N ""　←　パスフレーズなし鍵ペア作成
+Generating public/private rsa key pair.
+Enter file in which to save the key (/cygdrive/c/Documents and Settings/ユーザ名/.ssh/id_rsa):　←　空ENTER
+Your identification has been saved in /cygdrive/c/Documents and Settings/ユーザ名/.ssh/id_rsa.
+Your public key has been saved in /cygdrive/c/Documents and Settings/ユーザ名/.ssh/id_rsa.pub.
+The key fingerprint is:
+f7:e0:7c:bd:75:eb:0a:73:26:35:47:b0:64:ce:e0:27 ユーザ名@ホスト名
+}}}
+
+== バックアップ専用ユーザーを作成 ==
+
+バックアップユーザーを作成します。
+
+== 公開鍵をサーバーに設定する ==
+
+バックアップユーザーとして次の作業を行います。
+ここではバックアップユーザーをmybackupと仮定します。
+
+{{{
+% sudo mybackup
+% mkdir -p ~/.ssh
+% chmod 700 ~/.ssh/
+% '公開鍵' >> ~/.ssh/authorized_keys
+% chmod 600 ~/.ssh/authorized_keys
+% chown -R mybackup:mybackup ~/.ssh/
+}
+
+== ログイン制限 ==
+
+万が一秘密鍵が第三者に入手された場合を想定し、この鍵でログインできるIP元を制限します。
+
+{{{
+%sudo vi /etc/hosts
+222.333.xxx.xx.xxx backup-client
+}}}
+
+{{{
+% vi ~/.ssh/authorized_keys
+from="backup-client" ssh-rsa ...	# ← ssh-rsaの前にfromでホスト名を指定します。
+}}}
+
+== バックアップ取得コマンドを作成 ==
+
+C:\Program Files\cwRsync\cwrsync.cmdを任意の場所にコピーして最終行に下記を追記します。
+
+{{{
+SET USER=mybackup
+SET SERVER=linode.jp
+SET BACKUP=linode.jp.backup.tar.bz2
+rsync -avz -e ssh --delete %USER%@%SERVER%:/backup/%BACKUP% %SERVER%.%BACKUP% > cwrsync.log
+}}}
+
+== バックアップ取得確認 ==
+
+作成したバックアップ取得コマンド''cwrsync.cmd''を実行し、バックアップができているかどうかを確認します。
+最初の一回目はyes応答が必要ですが次回からは不要です。
+
+== バックアップ取得の自動実行を設定 ==
+
+私の場合、Windows の起動直後は負荷がかかるため、Windows 起動の10分後にバックアップできるようにしました。
+スタートアップ管理ソフト''Startup Impact''などを各自でインストールして下さい。
+
+[http://www.vector.co.jp/soft/win95/util/se120334.html Startup Impactのダウンロード]
+
+もちろんWindowsの[スタート]→[全てのプログラム]→[スタートアップ]にショートカットを置いても構わないと思います。

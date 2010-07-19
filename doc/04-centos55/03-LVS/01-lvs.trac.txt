@@ -1,0 +1,59 @@
+= LVS =
+
+'''''Linuxでロードバランサを構築する手順を紹介します。'''''
+
+== LVSとは ==
+
+以下、はてなキーワードより転載
+
+Linux カーネルに搭載されたソフトウェア・ロードバランシングの機能。LVS を使えば、製品のロードバランサを使用せずとも、安価にロードバランサ (Layer 4) を構築することができる。安価に構築できるというと性能面が気になるところだが、実際には非常にスケーラブルで負荷も低く大規模サイトでの運用に十分に耐えうるだけのパフォーマンスを発揮する。
+
+なお、LVS は L4 のパケット転送のみを担当する。冗長性の確保などは LVS 用に作られた他のソフトウェア (keepalived, ldirectord, Heartbeat) などを利用するとよい。
+
+== ipvsadm ==
+
+実際の操作はこのipvsadmを利用することになります。
+
+{{{
+% sudo yum -y install ipvsadm
+}}}
+
+== keepalived ==
+
+keepalivedをインストールしたいのですが、これはyumでは見つかりません。
+
+{{{
+% sudo yum list | grep keepalived
+% sudo yum list --enablerepo=rpmforge | grep keepalived
+% sudo yum list --enablerepo=epel | grep keepalived
+% sudo yum list --enablerepo=remi | grep keepalived
+}}}
+
+keepalived RPM をつくります。
+
+{{{
+% sudo yum -y install make kernel kernel-devel rpm-build openssl-devel curl
+% cd ~
+% wget http://www.keepalived.org/software/keepalived-1.1.20.tar.gz
+% tar zxvf keepalived-1.1.20.tar.gz
+% cd keepalived-1.1.20
+% sudo ./configure
+}}}
+
+生成されたkeepalived.specを利用してrpmを作成する
+
+{{{
+cp ../keepalived-1.1.20.tar.gz /usr/src/redhat/SOURCES/
+sudo rpmbuild -ba ./keepalived.spec
+}}}
+
+インストール
+
+{{{
+cd /usr/src/redhat/RPMS/i386
+sudo rpm -ihv keepalived-1.1.20-5.i386.rpm
+}}}
+
+
+
+

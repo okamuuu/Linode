@@ -1,0 +1,91 @@
+= 日付設定 =
+
+'''''日付の設定を日本時間に直します。'''''
+
+
+== 日付を日本時間に合わせる ==
+
+{{{
+% sudo rm /etc/localtime
+% sudo ln -s /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+}}}
+
+== ntpサーバーと同期 ==
+
+=== 確認 ===
+
+{{{
+% sudo yum -y install ntp
+}}}
+
+=== 設定 ===
+
+設定ファイルを編集します。
+
+{{{
+% sudo vi /etc/ntp.conf
+}}}
+
+内部からの時刻同期を許可し、日本標準時を提供しているNTPサーバーとそのサーバーに直接同期しているNTPサーバーを追加します。
+
+{{{
+# Hosts on local network are less restricted.
+restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap　←　←コメントをはずす(内部からの時刻同期を許可)
+# Use public servers from the pool.ntp.org project.
+# Please consider joining the pool (http://www.pool.ntp.org/join.html).
+server 0.rhel.pool.ntp.org
+server 1.rhel.pool.ntp.org
+server 2.rhel.pool.ntp.org
+server -4 ntp.nict.jp # 日本標準時を提供しているNTPサーバー(stratum 1)
+server -4 ntp.jst.mfeed.ad.jp # 上記サーバーと直接同期しているNTPサーバー(stratum 2)
+}}}
+
+
+''NTPサーバー''起動時に大幅に時刻がずれていると''NTPサーバー''が起動できないので、いったん、手動で時刻を合わせる
+
+{{{
+% sudo /usr/sbin/ntpdate ntp.nict.jp
+}}}
+
+起動
+
+{{{
+% sudo /etc/rc.d/init.d/ntpd start
+ntpd を起動中:                                             [  OK  ]
+}}}
+
+PC再起動時にntpdを自動起動に設定する。
+
+{{{
+% sudo /sbin/chkconfig ntpd on
+% sudo /sbin/chkconfig --list ntpd
+ntpd            0:off   1:off   2:on    3:on    4:on    5:on    6:off　←　ランレベル2～5のonを確認
+}}}
+
+== 確認 ==
+
+NTPサーバーへの時刻同期状態確認
+
+{{{
+%  /usr/sbin/ntpq -p
+
+remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+ntp-a2.nict.go. .PPS.            1 u    2   64    1    8.795    1.203   0.001
+ntp2.jst.mfeed. 210.173.160.86   2 u    1   64    1    7.623    1.207   0.001
+orion.asahi-net 202.224.53.11    2 u    -   64    1    6.579   -3.557   0.001
+※NTPサーバー名の前が空白の場合は時刻同期中の状態
+}}}
+
+約10分後、再度NTPサーバーへの時刻同期状態確認
+
+{{{
+% /usr/sbin/ntpq -p
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+*ntp-a2.nict.go. .PPS.            1 u    6   64   37    8.281    1.605   0.320
++ntp2.jst.mfeed. 210.173.160.86   2 u    4   64   37    7.545    2.592   0.910
++orion.asahi-net 202.224.53.11    2 u    1   64   37    6.579   -3.557   0.833
+※NTPサーバー名の前に*または+が表示されれば時刻同期完了の状態(ntpqの説明)
+
+}}}
