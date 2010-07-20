@@ -1,0 +1,171 @@
+= Replication =
+
+'''''MySQLのReplicationを紹介します。'''''
+
+== 前提 ==
+
+この作業はMySQL5.1を2基用意されている状況を想定しています。
+あらかじめご了承ください。
+
+ここではオーソドックスなマスター、スレーブがそれぞれ1台の場合を紹介します。
+またLinodeでは同じデータセンターではローカルIPが付与させるので管理画面から利用申請が可能です。
+
+私はFremountに2台Linodeを契約しているのでこれらを実際に使った手順を紹介します。
+
+== Private IPの設定 ==
+
+''Linode''の管理画面からIPアドレスの使用を申請します。
+
+申請が終わったら以下のページを参考にしながらPrivateIPの設定を行います。
+
+{{{
+http://library.linode.com/networking/configuring-static-ip-interfaces/
+}}}
+
+{{{
+% sudo vi /etc/sysconfig/network-scripts/ifcfg-eth0:1
+}}}
+
+{{{
+# Configuration for eth0:1
+DEVICE=eth0:1
+BOOTPROTO=none
+
+# This line ensures that the interface will be brought up during boot.
+ONBOOT=yes
+
+# eth0:1 - Private IPs have no gateway (they are not publicly routable) so all you need to
+# specify is the address and netmask.
+IPADDR=192.168.xxx.xxx
+NETMASK=255.255.128.0
+}}}
+
+hosts.allowにmysql接続を許可するように指定します。
+
+{{{
+% sudo vi /etc/hosts.allow
+}}}
+
+{{{
+mysqld: 192.168.xxx.xxx
+}}}
+
+== マスター側の設定 ==
+
+Master側ではバイナリログを採取しておく必要があるので、Master側のmy.cnfにlog-binの設定が入っていることを確認します。
+
+またserver-idを設定します。ここでは10にしました。
+
+{{{
+% sudo vi /etc/my.conf
+}}}
+
+{{{
+log-bin=/var/lib/mysql/blog/hostname
+server-id=10
+}}}
+
+== アカウントの作成 ==
+
+SlaveからMasterへ接続する際のアカウントをMaster側に用意します。
+REPLICATION SLAVE権限をこのアカウントに付与します。
+
+(SlaveのIPアドレス)から接続を許す'repl'ユーザーを作成する例。
+
+{{{
+mysql > GRANT REPLICATION SLAVE ON *.* TO
+   repl@192.168.xxx.xxx IDENTIFIED BY 'password';
+}}}
+
+== DBのバックアップ ==
+
+MasterDBを更新できないようにロックしてからバックアップを行う
+
+{{{
+mysql> FLUSH TABLES WITH READ LOCK;
+Query OK, 0 rows affected (0.00 sec)
+}}}
+
+メインスレッドが活動していないことを確認
+
+{{{
+mysql> show innodb status\G
+}}}
+
+現在のバイナリログのファイル名とログ内の現在位置を確認
+
+{{{
+mysql> SHOW MASTER STATUS;
++-----------------+----------+--------------+------------------+
+| File            | Position | Binlog_Do_DB | Binlog_Ignore_DB |
++-----------------+----------+--------------+------------------+
+| hostname.000003 |     1153 |              |                  |
++-----------------+----------+--------------+------------------+
+1 row in set (0.00 sec)
+}}}
+
+
+データベースをバックアップ
+ 
+{{{
+% sudo sh -c 'mysqldump --user=root --password testdb > /backup/mysql/testdb.dump.sql'
+Enter password:
+}}}
+
+テーブルのロックを解除
+
+{{{
+mysql>UNLOCK TABLES;
+}}}
+
+== Slave側にDBコピー ==
+
+dumpしたファイルをftpなどで転送してdumpファイルを実行する。
+一例として/tmpに配備して次のようにしました。
+
+{{{
+% sudo sh -c 'mysql --user=root --password --database=testdb < /tmp/testdb.dump.sql';
+}}}
+
+Slave側のmy.cnfにserver-idを設定します。
+またSlave側ではbinarylogを出力する必要はありません。
+
+{{{
+% sudo vi /etc/my.cnf
+}}}
+
+{{{
+# log-bin=/var/lib/mysql/blog/hostname
+server-id=20
+read_only
+}}}
+
+Slaveを再起動
+
+{{{
+% sudo /sbin/service mysqld restart
+}}}
+
+== レプリケーション開始 ==
+
+{{{
+% mysql -u root -p
+Enter password:
+}}}
+
+{{{
+mysql> CHANGE MASTER TO
+        MASTER_HOST='192.168.xxx.xxx',  
+        MASTER_USER='repl',      
+        MASTER_PASSWORD='password',
+        MASTER_LOG_FILE='hostname.000003',
+        MASTER_LOG_POS=1153; 
+}}}
+        
+{{{
+START SLAVE;
+}}}
+
+== 確認 ==
+
+masterに適当な列を追加して、Slaveでも同様になっている事を確認。完了。
